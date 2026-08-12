@@ -161,6 +161,8 @@ td.cell:hover{box-shadow:0 0 0 2px var(--indigo) inset}
 }
 tfoot td{background:#F7F8FA;font-family:var(--mono);font-size:calc(11px*var(--zoom));font-variant-numeric:tabular-nums;color:var(--ink-soft);height:calc(22px*var(--zoom))}
 tfoot td.c-name{background:#F7F8FA;font-family:var(--ui);font-size:calc(11px*var(--zoom));color:var(--muted);font-weight:600}
+tfoot .fi{width:9px;height:9px;border-radius:2px;border:1px solid rgba(0,0,0,.15);display:inline-block;margin-right:4px;vertical-align:-1px}
+tfoot tr.total td{border-top:1px solid var(--rule-strong)}
 tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#FCFCFD}
 
 .empty{padding:44px 16px;text-align:center;color:var(--muted)}
@@ -475,9 +477,22 @@ function render() {
     h += `<td class="c-sum" data-sd="${emp.id}">${days || ''}</td>` + (useHours ? `<td class="c-sum" data-sh="${emp.id}">${hours || ''}</td>` : '') + '</tr>';
   });
 
-  h += '</tbody><tfoot><tr><td class="c-name">出勤人數</td>';
+  h += '</tbody><tfoot><tr class="total"><td class="c-name">出勤人數</td>';
   for (let d = 1; d <= nd; d++) h += `<td data-pc="${d}">${perDay[d] || ''}</td>`;
-  h += '<td class="c-sum"></td>' + (useHours ? '<td class="c-sum"></td>' : '') + '</tr></tfoot></table>';
+  h += '<td class="c-sum"></td>' + (useHours ? '<td class="c-sum"></td>' : '') + '</tr>';
+  // 各班別每日人數；最右欄是該班別整月人次
+  state.shifts.forEach(s => {
+    let tot = 0;
+    h += `<tr><td class="c-name"><i class="fi" style="background:${esc(s.color)}"></i>${esc(s.name)}</td>`;
+    for (let d = 1; d <= nd; d++) {
+      let n = 0;
+      state.employees.forEach(emp => { if ((map[emp.id] || {})[d] === s.id) n++; });
+      tot += n;
+      h += `<td data-ps="${s.id}" data-d="${d}">${n || ''}</td>`;
+    }
+    h += `<td class="c-sum" data-pst="${s.id}">${tot || ''}</td>` + (useHours ? '<td class="c-sum"></td>' : '') + '</tr>';
+  });
+  h += '</tfoot></table>';
 
   scroll.innerHTML = h;
 }
@@ -518,6 +533,20 @@ function updateSums(e, d) {
   });
   const pc = document.querySelector(`[data-pc="${d}"]`);
   if (pc) pc.textContent = n || '';
+  // 各班別統計：這一天每個班別的人數，以及各班別整月人次
+  const cnt = {};
+  state.employees.forEach(emp => {
+    const id = map[emp.id]?.[d];
+    if (id) cnt[id] = (cnt[id] || 0) + 1;
+  });
+  const tots = {};
+  Object.values(map).forEach(row => Object.values(row).forEach(id => { tots[id] = (tots[id] || 0) + 1; }));
+  state.shifts.forEach(s => {
+    const c = document.querySelector(`[data-ps="${s.id}"][data-d="${d}"]`);
+    if (c) c.textContent = cnt[s.id] || '';
+    const t = document.querySelector(`[data-pst="${s.id}"]`);
+    if (t) t.textContent = tots[s.id] || '';
+  });
 }
 document.addEventListener('pointerdown', ev => {
   const td = ev.target.closest('td.cell');
