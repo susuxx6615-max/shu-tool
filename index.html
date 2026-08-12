@@ -1,0 +1,663 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>排班表</title>
+<style>
+:root{
+  --paper:#FAFAF8;
+  --panel:#FFFFFF;
+  --ink:#151A21;
+  --ink-soft:#3C4450;
+  --muted:#6C7480;
+  --rule:#E3E5E9;
+  --rule-strong:#BEC3CC;
+  --indigo:#26418F;
+  --sat:#F1F3F7;
+  --sun:#FBF2F1;
+  --today:#FFF6E0;
+  --ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--ui);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- chrome ---------- */
+.bar{
+  position:sticky;top:0;z-index:30;background:var(--panel);
+  border-bottom:1px solid var(--rule);
+}
+.bar-in{
+  max-width:1400px;margin:0 auto;padding:10px 16px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.eyebrow{
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--muted);
+}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper .ym{
+  font-family:var(--mono);font-size:17px;font-weight:600;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;min-width:118px;text-align:center;
+}
+.icon-btn{
+  width:30px;height:30px;border:1px solid var(--rule-strong);background:var(--panel);
+  border-radius:4px;color:var(--ink-soft);line-height:1;font-size:14px;
+}
+.icon-btn:hover{border-color:var(--indigo);color:var(--indigo)}
+.spacer{flex:1}
+.btn{
+  border:1px solid var(--rule-strong);background:var(--panel);border-radius:4px;
+  padding:6px 12px;font-size:13px;color:var(--ink-soft);
+}
+.btn:hover{border-color:var(--indigo);color:var(--indigo)}
+.btn-solid{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.btn-solid:hover{background:#1c3372;color:#fff}
+.btn-quiet{border-color:transparent;color:var(--muted)}
+.btn-quiet:hover{border-color:var(--rule-strong)}
+
+/* ---------- brush palette ---------- */
+.palette{
+  max-width:1400px;margin:0 auto;padding:12px 16px 4px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.palette .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-right:2px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 7px;
+  border:1px solid var(--rule-strong);border-radius:999px;background:var(--panel);
+  font-size:13px;transition:box-shadow .12s,border-color .12s;
+}
+.chip .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.12);
+  display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700}
+.chip .kbd{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset,0 1px 0 rgba(0,0,0,.04)}
+.chip[aria-pressed="true"] .kbd{color:var(--ink)}
+.help-btn{margin-left:4px}
+
+/* ---------- start card ---------- */
+.start{max-width:600px;margin:8px auto;padding:26px 8px 34px;text-align:left}
+.start h3{margin:0 0 4px;font-size:17px;font-weight:600;text-align:center}
+.start .sub{margin:0 0 22px;font-size:13px;color:var(--muted);text-align:center}
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+ol.steps li{
+  counter-increment:s;display:grid;grid-template-columns:30px 1fr auto;gap:4px 14px;
+  align-items:start;padding:14px 0;border-top:1px solid var(--rule);
+}
+ol.steps li::before{
+  content:counter(s,decimal-leading-zero);grid-row:1/3;
+  font-family:var(--mono);font-size:12px;color:var(--indigo);letter-spacing:.06em;padding-top:2px;
+}
+ol.steps b{font-size:14px;font-weight:600}
+ol.steps span{grid-column:2;font-size:12.5px;color:var(--muted);line-height:1.55}
+ol.steps button{grid-row:1/3;align-self:center;white-space:nowrap}
+
+/* ---------- help ---------- */
+.guide{margin:0;padding:0;list-style:none;counter-reset:g}
+.guide li{counter-increment:g;display:grid;grid-template-columns:26px 1fr;gap:3px 12px;padding:11px 0;border-bottom:1px dotted var(--rule)}
+.guide li::before{content:counter(g,decimal-leading-zero);grid-row:1/3;font-family:var(--mono);font-size:11px;color:var(--indigo);padding-top:3px}
+.guide b{font-size:13.5px;font-weight:600}
+.guide span{grid-column:2;font-size:12.5px;color:var(--muted);line-height:1.6}
+table.keys{width:100%;border-collapse:collapse;margin-top:4px}
+table.keys td{padding:6px 0;border-bottom:1px dotted var(--rule);font-size:12.5px;vertical-align:top}
+table.keys td:first-child{width:126px;color:var(--ink-soft)}
+kbd{
+  font-family:var(--mono);font-size:11px;background:#F2F3F6;border:1px solid var(--rule-strong);
+  border-bottom-width:2px;border-radius:3px;padding:1px 5px;color:var(--ink-soft);
+}
+
+/* ---------- sheet ---------- */
+.sheet-wrap{max-width:1400px;margin:10px auto 60px;padding:0 16px}
+.sheet{background:var(--panel);border:1px solid var(--rule);padding:16px 18px 18px}
+.sheet-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.unit{
+  border:none;border-bottom:1px dashed var(--rule-strong);background:transparent;
+  font-size:15px;font-weight:600;padding:2px 2px 3px;min-width:180px;
+}
+.unit:focus{outline:none;border-bottom-color:var(--indigo)}
+.sheet-title{
+  font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+}
+.sheet-meta{margin-left:auto;text-align:right;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 10px;font-size:11px;color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.15);display:inline-block}
+
+.scroll{overflow-x:auto}
+table.grid{border-collapse:collapse;table-layout:fixed;width:100%;min-width:900px}
+table.grid th,table.grid td{border:1px solid var(--rule);padding:0;text-align:center}
+table.grid thead th{
+  background:#F7F8FA;font-weight:600;font-size:11px;color:var(--ink-soft);
+  position:sticky;top:0;z-index:5;
+}
+th.c-name,td.c-name{
+  width:112px;text-align:left;padding:3px 8px;position:sticky;left:0;background:var(--panel);z-index:6;
+  border-right:1px solid var(--rule-strong);
+}
+thead th.c-name{background:#F7F8FA;z-index:7}
+td.c-name .nm{font-size:13px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.c-name .no{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+th.c-day{width:30px}
+th.c-day .d{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;display:block;line-height:1.2}
+th.c-day .w{font-size:9px;color:var(--muted);display:block;line-height:1.2}
+th.c-sum,td.c-sum{width:38px;border-left:1px solid var(--rule-strong);font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+td.c-sum{color:var(--ink-soft)}
+td.cell{height:26px;cursor:cell;user-select:none}
+td.cell:hover{box-shadow:0 0 0 2px var(--indigo) inset}
+.sat{background:var(--sat)}
+.sun{background:var(--sun)}
+.today{box-shadow:inset 0 2px 0 #E8A33D}
+.mark{
+  display:block;height:100%;width:100%;font-family:var(--mono);font-size:11px;font-weight:700;
+  line-height:26px;letter-spacing:.02em;
+}
+tfoot td{background:#F7F8FA;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-soft);height:22px}
+tfoot td.c-name{background:#F7F8FA;font-family:var(--ui);font-size:11px;color:var(--muted);font-weight:600}
+tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#FCFCFD}
+
+.empty{padding:44px 16px;text-align:center;color:var(--muted)}
+.empty p{margin:0 0 14px;font-size:13px}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(21,26,33,.42);display:grid;place-items:center;z-index:50;padding:16px}
+.modal{background:var(--panel);border:1px solid var(--rule-strong);width:min(660px,100%);max-height:86vh;display:flex;flex-direction:column}
+.modal header{padding:14px 18px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:10px}
+.modal header h2{margin:0;font-size:15px;font-weight:600}
+.modal .body{padding:14px 18px;overflow:auto}
+.modal footer{padding:12px 18px;border-top:1px solid var(--rule);display:flex;gap:8px;align-items:center}
+.row{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dotted var(--rule)}
+.row input[type=text]{border:1px solid var(--rule);border-radius:3px;padding:5px 7px;min-width:0}
+.row input[type=number]{border:1px solid var(--rule);border-radius:3px;padding:5px 7px;width:64px;font-family:var(--mono)}
+.row input[type=color]{width:34px;height:30px;border:1px solid var(--rule);border-radius:3px;padding:2px;background:var(--panel)}
+.row .grow{flex:1}
+.row .code{width:52px;text-align:center;font-family:var(--mono);font-weight:700}
+.row .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:22px;text-align:right}
+.row label{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.mini{width:26px;height:26px;border:1px solid var(--rule);background:var(--panel);border-radius:3px;font-size:12px;color:var(--muted);line-height:1}
+.mini:hover{border-color:var(--indigo);color:var(--indigo)}
+.mini.danger:hover{border-color:#B4232A;color:#B4232A}
+.field{margin-top:16px}
+.field h3{margin:0 0 6px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.field p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;min-height:88px;resize:vertical}
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:8px 16px;border-radius:4px;font-size:13px;z-index:80;
+}
+
+@media (max-width:640px){
+  .sheet{padding:12px}
+  .sheet-wrap{padding:0 8px}
+}
+
+/* ---------- print ---------- */
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  html,body{background:#fff}
+  .no-print{display:none!important}
+  .sheet-wrap{max-width:none;margin:0;padding:0}
+  .sheet{border:none;padding:0}
+  .scroll{overflow:visible}
+  table.grid{min-width:0;width:100%}
+  table.grid thead th{position:static}
+  th.c-name,td.c-name,thead th.c-name,tfoot td.c-name{position:static}
+  .sheet-title{font-size:15pt}
+  .unit{font-size:11pt;border-bottom:none}
+  .sheet-meta{font-size:7pt}
+  .legend{font-size:7.5pt;gap:9px;margin-bottom:6px}
+  th.c-name,td.c-name{width:22mm;padding:1px 4px}
+  td.c-name .nm{font-size:8pt}
+  td.c-name .no{font-size:6pt}
+  th.c-day .d{font-size:7.5pt}
+  th.c-day .w{font-size:6pt}
+  th.c-sum,td.c-sum{width:8mm;font-size:7.5pt}
+  td.cell{height:5.2mm}
+  .mark{font-size:7.5pt;line-height:5.2mm}
+  tfoot td{height:5mm;font-size:7pt}
+  tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#fff}
+  td.cell:hover{box-shadow:none}
+  .today{box-shadow:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+
+<div class="bar no-print">
+  <div class="bar-in">
+    <span class="eyebrow">排班 / ROSTER</span>
+    <div class="stepper">
+      <button class="icon-btn" id="prev" title="上個月">‹</button>
+      <span class="ym" id="ym">—</span>
+      <button class="icon-btn" id="next" title="下個月">›</button>
+      <button class="btn btn-quiet" id="today-btn">本月</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn" id="open-staff">員工</button>
+    <button class="btn" id="open-shifts">班別</button>
+    <button class="btn" id="copy-prev">套用上月</button>
+    <button class="btn btn-solid" id="print">列印班表</button>
+    <button class="icon-btn help-btn" id="help" title="使用說明">？</button>
+  </div>
+</div>
+
+<div class="palette no-print" id="palette"></div>
+
+<div class="sheet-wrap">
+  <div class="sheet" id="sheet">
+    <div class="sheet-head">
+      <input class="unit" id="unit" placeholder="單位名稱" aria-label="單位名稱">
+      <div class="sheet-title" id="sheet-title">—</div>
+      <div class="sheet-meta" id="sheet-meta"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="scroll" id="scroll"></div>
+  </div>
+</div>
+
+<script>
+const KEY = 'roster:data:v1';
+const WD = ['日','一','二','三','四','五','六'];
+const PRESET = ['#F6C445','#7FB2E5','#8FCF9A','#E7907C','#B7A5E0','#9AD3D0','#E4B7CB','#C9CBD1'];
+
+let state = null, ym = null, brush = null, painting = false, saveTimer = null;
+
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const mk = (y, m) => y + '-' + String(m + 1).padStart(2, '0');
+// 用 UTC 推算，星期與天數不受使用者時區或日光節約影響
+const daysIn = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+const dow = (y, m, d) => new Date(Date.UTC(y, m, d)).getUTCDay();
+
+function seed() {
+  return {
+    unit: '',
+    employees: [],
+    shifts: [
+      { id: uid(), code: '早', name: '早班', color: '#F6C445', hours: 8, count: true },
+      { id: uid(), code: '中', name: '中班', color: '#7FB2E5', hours: 8, count: true },
+      { id: uid(), code: '晚', name: '晚班', color: '#B7A5E0', hours: 8, count: true },
+      { id: uid(), code: '休', name: '休假', color: '#EDEEF1', hours: 0, count: false }
+    ],
+    schedule: {}
+  };
+}
+
+/* ---------- storage ----------
+   Claude 環境提供 window.storage；放到 GitHub Pages 等一般網頁時
+   自動改用瀏覽器內建儲存，資料存在該台電腦的這個瀏覽器裡。      */
+const hasHost = typeof window.storage?.get === 'function';
+const store = {
+  async get(k) {
+    if (hasHost) return await window.storage.get(k);
+    const v = localStorage.getItem(k);
+    return v ? { key: k, value: v } : null;
+  },
+  async set(k, v) { return hasHost ? window.storage.set(k, v) : localStorage.setItem(k, v); },
+  async del(k) { return hasHost ? window.storage.delete(k) : localStorage.removeItem(k); }
+};
+async function load() {
+  try {
+    const r = await store.get(KEY);
+    if (r && r.value) return JSON.parse(r.value);
+  } catch (e) { /* 尚未存過或讀取失敗，用預設值開始 */ }
+  return null;
+}
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await store.set(KEY, JSON.stringify(state)); }
+    catch (e) { toast('存不起來，這次的修改只留在畫面上'); }
+  }, 350);
+}
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+/* ---------- helpers ---------- */
+const shiftOf = id => state.shifts.find(s => s.id === id);
+function monthMap() {
+  const k = mk(ym.y, ym.m);
+  if (!state.schedule[k]) state.schedule[k] = {};
+  return state.schedule[k];
+}
+function textOn(hex) {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 158 ? '#151A21' : '#fff';
+}
+
+/* ---------- palette ---------- */
+function renderPalette() {
+  const p = $('#palette');
+  p.innerHTML = '<span class="lbl">筆刷</span>';
+  state.shifts.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.setAttribute('aria-pressed', brush === s.id);
+    b.innerHTML = `<span class="sw" style="background:${s.color};color:${textOn(s.color)}">${s.code}</span>${s.name}${i < 9 ? `<span class="kbd">${i + 1}</span>` : ''}`;
+    b.onclick = () => { brush = brush === s.id ? null : s.id; renderPalette(); };
+    p.appendChild(b);
+  });
+  const e = document.createElement('button');
+  e.className = 'chip';
+  e.setAttribute('aria-pressed', brush === 'erase');
+  e.innerHTML = '<span class="sw" style="background:#fff">✕</span>清除<span class="kbd">0</span>';
+  e.onclick = () => { brush = brush === 'erase' ? null : 'erase'; renderPalette(); };
+  p.appendChild(e);
+}
+
+/* ---------- grid ---------- */
+function render() {
+  const { y, m } = ym;
+  $('#ym').textContent = `${y}年${m + 1}月`;
+  $('#sheet-title').textContent = `${y} 年 ${m + 1} 月 排班表`;
+  const now = new Date();
+  $('#sheet-meta').textContent = `製表 ${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+  $('#unit').value = state.unit || '';
+
+  $('#legend').innerHTML = state.shifts.map(s =>
+    `<span><i style="background:${s.color}"></i>${s.code}　${s.name}${s.hours ? ' · ' + s.hours + ' 小時' : ''}</span>`).join('');
+
+  const scroll = $('#scroll');
+  if (!state.employees.length) {
+    scroll.innerHTML = `<div class="start no-print">
+      <h3>三個步驟排完一個月</h3>
+      <p class="sub">照順序做一次，之後每個月只要重複第 3 步。</p>
+      <ol class="steps">
+        <li><b>加入員工</b><span>把名單一次貼上，一行一個名字，順序之後可以調。</span>
+          <button class="btn btn-solid" onclick="openStaff()">加入員工</button></li>
+        <li><b>設定班別</b><span>改成你們實際的班別名稱、顏色與時數。休假這類班別把「計入出勤」取消勾選。</span>
+          <button class="btn" onclick="openShifts()">設定班別</button></li>
+        <li><b>點格子排班</b><span>在上方選一個班別，然後在格子上點一下填入，按住拖曳可以連續填一整排。排好按「列印班表」。</span>
+          <button class="btn" onclick="openHelp()">看完整說明</button></li>
+      </ol></div>`;
+    return;
+  }
+
+  const nd = daysIn(y, m);
+  const map = monthMap();
+  const isThis = now.getFullYear() === y && now.getMonth() === m;
+  const useHours = state.shifts.some(s => +s.hours > 0);
+
+  let h = '<table class="grid"><thead><tr><th class="c-name">姓名</th>';
+  for (let d = 1; d <= nd; d++) {
+    const w = dow(y, m, d);
+    const cls = ['c-day', w === 6 ? 'sat' : '', w === 0 ? 'sun' : '', isThis && d === now.getDate() ? 'today' : ''].join(' ');
+    h += `<th class="${cls}"><span class="d">${d}</span><span class="w">${WD[w]}</span></th>`;
+  }
+  h += '<th class="c-sum">天</th>' + (useHours ? '<th class="c-sum">時</th>' : '') + '</tr></thead><tbody>';
+
+  const perDay = new Array(nd + 1).fill(0);
+  state.employees.forEach(emp => {
+    const row = map[emp.id] || {};
+    let days = 0, hours = 0;
+    h += `<tr><td class="c-name"><div class="nm">${esc(emp.name)}</div>${emp.note ? `<div class="no">${esc(emp.note)}</div>` : ''}</td>`;
+    for (let d = 1; d <= nd; d++) {
+      const w = dow(y, m, d);
+      const s = row[d] ? shiftOf(row[d]) : null;
+      if (s && s.count !== false) { days++; hours += +s.hours || 0; perDay[d]++; }
+      const cls = ['cell', w === 6 ? 'sat' : '', w === 0 ? 'sun' : ''].join(' ');
+      const style = s ? ` style="background:${s.color}"` : '';
+      const inner = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
+      h += `<td class="${cls}" data-e="${emp.id}" data-d="${d}"${style}>${inner}</td>`;
+    }
+    h += `<td class="c-sum">${days || ''}</td>` + (useHours ? `<td class="c-sum">${hours || ''}</td>` : '') + '</tr>';
+  });
+
+  h += '</tbody><tfoot><tr><td class="c-name">出勤人數</td>';
+  for (let d = 1; d <= nd; d++) h += `<td>${perDay[d] || ''}</td>`;
+  h += '<td class="c-sum"></td>' + (useHours ? '<td class="c-sum"></td>' : '') + '</tr></tfoot></table>';
+
+  scroll.innerHTML = h;
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+/* ---------- painting ---------- */
+function paint(td, clear) {
+  const e = td.dataset.e, d = +td.dataset.d;
+  if (!e) return;
+  const map = monthMap();
+  if (!map[e]) map[e] = {};
+  if (clear || brush === 'erase') delete map[e][d];
+  else if (brush) map[e][d] = brush;
+  else return;
+  save(); render();
+}
+document.addEventListener('pointerdown', ev => {
+  const td = ev.target.closest('td.cell');
+  if (!td || ev.button === 2) return;
+  if (!brush) { toast('先在上方選一個班別當筆刷'); return; }
+  painting = ev.pointerType === 'mouse';
+  paint(td);
+});
+document.addEventListener('pointermove', ev => {
+  if (!painting) return;
+  const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  const td = el && el.closest ? el.closest('td.cell') : null;
+  if (td) paint(td);
+});
+document.addEventListener('pointerup', () => painting = false);
+document.addEventListener('contextmenu', ev => {
+  const td = ev.target.closest('td.cell');
+  if (!td) return;
+  ev.preventDefault(); paint(td, true);
+});
+document.addEventListener('keydown', ev => {
+  if (/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if (ev.key === '0') { brush = 'erase'; renderPalette(); }
+  else if (/^[1-9]$/.test(ev.key)) {
+    const s = state.shifts[+ev.key - 1];
+    if (s) { brush = s.id; renderPalette(); }
+  } else if (ev.key === 'Escape') { closeModal(); }
+});
+
+/* ---------- modals ---------- */
+function closeModal() { const o = document.querySelector('.overlay'); if (o) o.remove(); }
+function modal(title, bodyHTML, footerHTML) {
+  closeModal();
+  const o = document.createElement('div');
+  o.className = 'overlay no-print';
+  o.innerHTML = `<div class="modal"><header><h2>${title}</h2><span class="spacer" style="flex:1"></span>
+    <button class="mini" data-close>✕</button></header>
+    <div class="body">${bodyHTML}</div><footer>${footerHTML}</footer></div>`;
+  o.addEventListener('click', ev => { if (ev.target === o || ev.target.dataset.close !== undefined) closeModal(); });
+  document.body.appendChild(o);
+  return o;
+}
+
+function openStaff() {
+  const rows = state.employees.map((e, i) => `<div class="row" data-i="${i}">
+      <span class="idx">${i + 1}</span>
+      <input type="text" class="grow" value="${esc(e.name)}" placeholder="姓名" data-f="name">
+      <input type="text" style="width:110px" value="${esc(e.note || '')}" placeholder="職務／備註" data-f="note">
+      <button class="mini" data-mv="-1" title="上移">↑</button>
+      <button class="mini" data-mv="1" title="下移">↓</button>
+      <button class="mini danger" data-del title="刪除">✕</button>
+    </div>`).join('') || '<p style="color:var(--muted);font-size:13px;margin:0">名單是空的，用下面的欄位一次貼上。</p>';
+
+  const o = modal('員工', rows + `<div class="field">
+      <h3>批次新增</h3><p>一行一個姓名，貼上後按「加入名單」。</p>
+      <textarea id="bulk" placeholder="王小明&#10;陳美惠&#10;林志豪"></textarea>
+    </div>`, `<button class="btn" id="bulk-add">加入名單</button>
+       <span style="flex:1"></span><button class="btn btn-solid" data-close>完成</button>`);
+
+  o.querySelectorAll('.row').forEach(r => {
+    const i = +r.dataset.i;
+    r.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+      state.employees[i][inp.dataset.f] = inp.value; save(); render();
+    });
+    r.querySelector('[data-del]').onclick = () => {
+      if (!confirm(`刪除「${state.employees[i].name}」？該員工所有月份的班別會一併移除。`)) return;
+      const id = state.employees[i].id;
+      state.employees.splice(i, 1);
+      Object.values(state.schedule).forEach(mm => delete mm[id]);
+      save(); render(); openStaff();
+    };
+    r.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => {
+      const j = i + (+b.dataset.mv);
+      if (j < 0 || j >= state.employees.length) return;
+      const [x] = state.employees.splice(i, 1);
+      state.employees.splice(j, 0, x);
+      save(); render(); openStaff();
+    });
+  });
+  o.querySelector('#bulk-add').onclick = () => {
+    const names = o.querySelector('#bulk').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!names.length) return;
+    names.forEach(n => state.employees.push({ id: uid(), name: n, note: '' }));
+    save(); render(); openStaff();
+  };
+}
+
+function openShifts() {
+  const rows = state.shifts.map((s, i) => `<div class="row" data-i="${i}">
+      <input type="color" value="${s.color}" data-f="color">
+      <input type="text" class="code" maxlength="2" value="${esc(s.code)}" data-f="code" title="格子裡顯示的字">
+      <input type="text" class="grow" value="${esc(s.name)}" placeholder="班別名稱" data-f="name">
+      <input type="number" min="0" max="24" step="0.5" value="${s.hours}" data-f="hours" title="時數">
+      <label><input type="checkbox" ${s.count !== false ? 'checked' : ''} data-f="count">計入出勤</label>
+      <button class="mini danger" data-del title="刪除">✕</button>
+    </div>`).join('');
+
+  const o = modal('班別', rows + `<div class="field"><p>「計入出勤」沒勾的班別（例如休假）不會算進天數、時數與底部的每日出勤人數。</p></div>`,
+    `<button class="btn" id="add-shift">新增班別</button><span style="flex:1"></span>
+     <button class="btn btn-solid" data-close>完成</button>`);
+
+  o.querySelectorAll('.row').forEach(r => {
+    const i = +r.dataset.i;
+    r.querySelectorAll('input').forEach(inp => {
+      const ev = inp.type === 'color' ? 'input' : (inp.type === 'checkbox' ? 'change' : 'input');
+      inp.addEventListener(ev, () => {
+        const f = inp.dataset.f;
+        state.shifts[i][f] = f === 'count' ? inp.checked : (f === 'hours' ? +inp.value : inp.value);
+        save(); render(); renderPalette();
+      });
+    });
+    r.querySelector('[data-del]').onclick = () => {
+      const s = state.shifts[i];
+      if (!confirm(`刪除班別「${s.name}」？已排入的格子會被清空。`)) return;
+      Object.values(state.schedule).forEach(mm => Object.values(mm).forEach(row =>
+        Object.keys(row).forEach(d => { if (row[d] === s.id) delete row[d]; })));
+      if (brush === s.id) brush = null;
+      state.shifts.splice(i, 1);
+      save(); render(); renderPalette(); openShifts();
+    };
+  });
+  o.querySelector('#add-shift').onclick = () => {
+    state.shifts.push({ id: uid(), code: '新', name: '新班別', color: PRESET[state.shifts.length % PRESET.length], hours: 8, count: true });
+    save(); render(); renderPalette(); openShifts();
+  };
+}
+window.openStaff = openStaff;
+
+/* ---------- toolbar ---------- */
+function go(delta) {
+  const d = new Date(ym.y, ym.m + delta, 1);
+  ym = { y: d.getFullYear(), m: d.getMonth() };
+  render();
+}
+$('#prev').onclick = () => go(-1);
+$('#next').onclick = () => go(1);
+$('#today-btn').onclick = () => { const n = new Date(); ym = { y: n.getFullYear(), m: n.getMonth() }; render(); };
+$('#open-staff').onclick = openStaff;
+$('#open-shifts').onclick = openShifts;
+$('#print').onclick = () => window.print();
+$('#unit').oninput = e => { state.unit = e.target.value; save(); };
+$('#copy-prev').onclick = () => {
+  const prev = new Date(ym.y, ym.m - 1, 1);
+  const src = state.schedule[mk(prev.getFullYear(), prev.getMonth())];
+  if (!src || !Object.keys(src).length) { toast('上個月沒有班表可以套用'); return; }
+  if (!confirm('把上個月的班表複製過來？本月已排的內容會被覆蓋。')) return;
+  const nd = daysIn(ym.y, ym.m), dst = {};
+  Object.entries(src).forEach(([e, row]) => {
+    dst[e] = {};
+    Object.entries(row).forEach(([d, s]) => { if (+d <= nd) dst[e][d] = s; });
+  });
+  state.schedule[mk(ym.y, ym.m)] = dst;
+  save(); render(); toast('已套用上月班表，記得檢查月底日期');
+};
+/* ---------- help ---------- */
+function openHelp() {
+  const where = hasHost ? '這個對話' : '這台電腦的這個瀏覽器';
+  const o = modal('使用說明', `
+    <ol class="guide">
+      <li><b>加入員工</b><span>按上方「員工」，在最下面的欄位一行一個姓名貼上，按「加入名單」。姓名旁可填職務或備註，會印在名字下方。用 ↑ ↓ 調整表上的排列順序。</span></li>
+      <li><b>設定班別</b><span>按上方「班別」。左邊色塊決定格子顏色，接著是格子裡顯示的字（1–2 字）、班別全名、時數。休假、例假這類不算上班的，把「計入出勤」取消勾選，就不會被算進統計。</span></li>
+      <li><b>排班</b><span>在筆刷列選一個班別，在格子上點一下就填入。按住滑鼠左鍵拖曳可以一次填一整排，適合連上五天。填錯就按右鍵清除，或選「清除」筆刷再塗。</span></li>
+      <li><b>看統計</b><span>右邊兩欄是每個人的出勤天數與時數，最下面一列是每天的出勤人數——人力不足的日子會直接看出來。全部自動計算。</span></li>
+      <li><b>下個月</b><span>用左上角 ‹ › 換月份。按「套用上月」可以把上個月整份複製過來再修改，比從空白排快得多。</span></li>
+      <li><b>列印</b><span>按「列印班表」，版面已設定成 A4 橫式一頁。在列印對話框把「背景圖形」打開，班別顏色才會印出來。</span></li>
+    </ol>
+    <div class="field">
+      <h3>鍵盤</h3>
+      <table class="keys">
+        <tr><td><kbd>1</kbd>–<kbd>9</kbd></td><td>切換到第 1–9 個班別筆刷</td></tr>
+        <tr><td><kbd>0</kbd></td><td>切換成清除筆刷</td></tr>
+        <tr><td>右鍵點格子</td><td>清除該格</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>關閉視窗</td></tr>
+      </table>
+    </div>
+    <div class="field">
+      <h3>資料存在哪裡</h3>
+      <p>所有內容自動儲存在${where}，不會傳到任何伺服器。換電腦、換瀏覽器或清除瀏覽資料後就看不到了，重要班表請先匯出備份，或直接列印存檔。</p>
+    </div>`,
+    `<button class="btn" id="export">匯出備份</button>
+     <button class="btn" id="import">匯入備份</button>
+     <span style="flex:1"></span>
+     <button class="btn btn-quiet" id="reset">清除所有資料</button>`);
+
+  o.querySelector('#export').onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    const n = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = `班表備份-${n.getFullYear()}${String(n.getMonth() + 1).padStart(2, '0')}${String(n.getDate()).padStart(2, '0')}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  };
+  o.querySelector('#import').onclick = () => {
+    const f = document.createElement('input');
+    f.type = 'file'; f.accept = 'application/json,.json';
+    f.onchange = () => {
+      const file = f.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const d = JSON.parse(r.result);
+          if (!d.shifts || !d.employees) throw 0;
+          if (!confirm('匯入會覆蓋目前的所有資料，確定嗎？')) return;
+          state = d; brush = state.shifts[0]?.id || null;
+          save(); render(); renderPalette(); closeModal(); toast('已匯入備份');
+        } catch (e) { toast('這個檔案讀不出來，請選擇本工具匯出的備份檔'); }
+      };
+      r.readAsText(file);
+    };
+    f.click();
+  };
+  o.querySelector('#reset').onclick = async () => {
+    if (!confirm('清除所有員工、班別與班表？這個動作無法復原，建議先匯出備份。')) return;
+    state = seed();
+    try { await store.del(KEY); } catch (e) { }
+    brush = state.shifts[0].id; render(); renderPalette(); closeModal();
+  };
+}
+$('#help').onclick = openHelp;
+window.openShifts = openShifts;
+window.openHelp = openHelp;
+
+/* ---------- boot ---------- */
+(async () => {
+  const n = new Date();
+  ym = { y: n.getFullYear(), m: n.getMonth() };
+  state = (await load()) || seed();
+  if (!state.shifts) state = seed();
+  brush = state.shifts[0] ? state.shifts[0].id : null;
+  renderPalette();
+  render();
+})();
+</script>
