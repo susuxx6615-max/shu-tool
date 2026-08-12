@@ -16,12 +16,15 @@
   --today:#FFF6E0;
   --ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
   --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono",monospace;
+  --zoom:1;
 }
+:root[data-zoom="1.25"]{--zoom:1.25}
+:root[data-zoom="1.5"]{--zoom:1.5}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   background:var(--paper);color:var(--ink);font-family:var(--ui);
-  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  font-size:calc(14px*var(--zoom));line-height:1.45;-webkit-font-smoothing:antialiased;
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer}
@@ -52,8 +55,9 @@ button{cursor:pointer}
 .spacer{flex:1}
 .btn{
   border:1px solid var(--rule-strong);background:var(--panel);border-radius:4px;
-  padding:6px 12px;font-size:13px;color:var(--ink-soft);
+  padding:6px 12px;font-size:calc(13px*var(--zoom));color:var(--ink-soft);
 }
+select.btn{appearance:auto;padding:5px 8px}
 .btn:hover{border-color:var(--indigo);color:var(--indigo)}
 .btn-solid{background:var(--indigo);border-color:var(--indigo);color:#fff}
 .btn-solid:hover{background:#1c3372;color:#fff}
@@ -69,7 +73,7 @@ button{cursor:pointer}
 .chip{
   display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 7px;
   border:1px solid var(--rule-strong);border-radius:999px;background:var(--panel);
-  font-size:13px;transition:box-shadow .12s,border-color .12s;
+  font-size:calc(13px*var(--zoom));transition:box-shadow .12s,border-color .12s;
 }
 .chip .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.12);
   display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700}
@@ -115,15 +119,15 @@ kbd{
 .sheet-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
 .unit{
   border:none;border-bottom:1px dashed var(--rule-strong);background:transparent;
-  font-size:15px;font-weight:600;padding:2px 2px 3px;min-width:180px;
+  font-size:calc(15px*var(--zoom));font-weight:600;padding:2px 2px 3px;min-width:180px;
 }
 .unit:focus{outline:none;border-bottom-color:var(--indigo)}
 .sheet-title{
-  font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;
+  font-family:var(--mono);font-size:calc(22px*var(--zoom));font-weight:600;font-variant-numeric:tabular-nums;
   letter-spacing:.02em;
 }
 .sheet-meta{margin-left:auto;text-align:right;font-size:11px;color:var(--muted);font-family:var(--mono)}
-.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 10px;font-size:11px;color:var(--ink-soft)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 10px;font-size:calc(11px*var(--zoom));color:var(--ink-soft)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.15);display:inline-block}
 
@@ -131,32 +135,32 @@ kbd{
 table.grid{border-collapse:collapse;table-layout:fixed;width:100%;min-width:900px}
 table.grid th,table.grid td{border:1px solid var(--rule);padding:0;text-align:center}
 table.grid thead th{
-  background:#F7F8FA;font-weight:600;font-size:11px;color:var(--ink-soft);
+  background:#F7F8FA;font-weight:600;font-size:calc(11px*var(--zoom));color:var(--ink-soft);
   position:sticky;top:0;z-index:5;
 }
 th.c-name,td.c-name{
-  width:112px;text-align:left;padding:3px 8px;position:sticky;left:0;background:var(--panel);z-index:6;
+  width:calc(112px*var(--zoom));text-align:left;padding:3px 8px;position:sticky;left:0;background:var(--panel);z-index:6;
   border-right:1px solid var(--rule-strong);
 }
 thead th.c-name{background:#F7F8FA;z-index:7}
-td.c-name .nm{font-size:13px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-td.c-name .no{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-th.c-day{width:30px}
-th.c-day .d{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;display:block;line-height:1.2}
-th.c-day .w{font-size:9px;color:var(--muted);display:block;line-height:1.2}
-th.c-sum,td.c-sum{width:38px;border-left:1px solid var(--rule-strong);font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+td.c-name .nm{font-size:calc(13px*var(--zoom));line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.c-name .no{font-size:calc(10px*var(--zoom));color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+th.c-day{width:calc(30px*var(--zoom))}
+th.c-day .d{font-family:var(--mono);font-size:calc(12px*var(--zoom));font-variant-numeric:tabular-nums;display:block;line-height:1.2}
+th.c-day .w{font-size:calc(9px*var(--zoom));color:var(--muted);display:block;line-height:1.2}
+th.c-sum,td.c-sum{width:calc(38px*var(--zoom));border-left:1px solid var(--rule-strong);font-family:var(--mono);font-size:calc(12px*var(--zoom));font-variant-numeric:tabular-nums}
 td.c-sum{color:var(--ink-soft)}
-td.cell{height:26px;cursor:cell;user-select:none}
+td.cell{height:calc(26px*var(--zoom));cursor:cell;user-select:none}
 td.cell:hover{box-shadow:0 0 0 2px var(--indigo) inset}
 .sat{background:var(--sat)}
 .sun{background:var(--sun)}
 .today{box-shadow:inset 0 2px 0 #E8A33D}
 .mark{
-  display:block;height:100%;width:100%;font-family:var(--mono);font-size:11px;font-weight:700;
-  line-height:26px;letter-spacing:.02em;
+  display:block;height:100%;width:100%;font-family:var(--mono);font-size:calc(11px*var(--zoom));font-weight:700;
+  line-height:calc(26px*var(--zoom));letter-spacing:.02em;
 }
-tfoot td{background:#F7F8FA;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-soft);height:22px}
-tfoot td.c-name{background:#F7F8FA;font-family:var(--ui);font-size:11px;color:var(--muted);font-weight:600}
+tfoot td{background:#F7F8FA;font-family:var(--mono);font-size:calc(11px*var(--zoom));font-variant-numeric:tabular-nums;color:var(--ink-soft);height:calc(22px*var(--zoom))}
+tfoot td.c-name{background:#F7F8FA;font-family:var(--ui);font-size:calc(11px*var(--zoom));color:var(--muted);font-weight:600}
 tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#FCFCFD}
 
 .empty{padding:44px 16px;text-align:center;color:var(--muted)}
@@ -197,6 +201,8 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
 /* ---------- print ---------- */
 @media print{
   @page{size:A4 landscape;margin:8mm}
+  /* 列印一律回到標準字級，維持 A4 一頁的版面 */
+  :root[data-zoom]{--zoom:1}
   html,body{background:#fff}
   .no-print{display:none!important}
   .sheet-wrap{max-width:none;margin:0;padding:0}
@@ -238,6 +244,11 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
     <button class="btn" id="open-staff">員工</button>
     <button class="btn" id="open-shifts">班別</button>
     <button class="btn" id="copy-prev">套用上月</button>
+    <select class="btn" id="zoom" title="畫面字體大小" aria-label="畫面字體大小">
+      <option value="1">字級：標準</option>
+      <option value="1.25">字級：大</option>
+      <option value="1.5">字級：特大</option>
+    </select>
     <button class="btn btn-solid" id="print">列印班表</button>
     <button class="icon-btn help-btn" id="help" title="使用說明">？</button>
   </div>
@@ -271,9 +282,11 @@ const mk = (y, m) => y + '-' + String(m + 1).padStart(2, '0');
 const daysIn = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 const dow = (y, m, d) => new Date(Date.UTC(y, m, d)).getUTCDay();
 
+const ZOOMS = [1, 1.25, 1.5];
 function seed() {
   return {
     unit: '',
+    zoom: 1,
     employees: [],
     shifts: [
       { id: uid(), code: '早', name: '早班', color: '#F6C445', hours: 8, count: true },
@@ -305,13 +318,64 @@ async function load() {
   } catch (e) { /* 尚未存過或讀取失敗，用預設值開始 */ }
   return null;
 }
-function save() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    try { await store.set(KEY, JSON.stringify(state)); }
-    catch (e) { toast('存不起來，這次的修改只留在畫面上'); }
-  }, 350);
+/* 驗證並整理外部資料（匯入的備份檔、storage 讀回的舊資料）。
+   結構不對回傳 null；順便丟掉空月份、無效班別/員工參照與非法色碼。 */
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+function normBackup(d) {
+  if (!d || typeof d !== 'object' || !Array.isArray(d.shifts) || !Array.isArray(d.employees)) return null;
+  const shifts = d.shifts.map(s => s && typeof s === 'object' && s.id != null ? {
+    id: String(s.id),
+    code: String(s.code ?? '班').slice(0, 2) || '班',
+    name: String(s.name ?? '班別'),
+    color: HEX.test(s.color) ? s.color : '#C9CBD1',
+    hours: Math.max(0, Math.min(24, +s.hours || 0)),
+    count: s.count !== false
+  } : null).filter(Boolean);
+  if (!shifts.length) shifts.push(...seed().shifts);
+  const employees = d.employees.map(e => e && typeof e === 'object' && e.id != null && e.name != null ? {
+    id: String(e.id), name: String(e.name), note: String(e.note ?? '')
+  } : null).filter(Boolean);
+  const sids = new Set(shifts.map(s => s.id));
+  const eids = new Set(employees.map(e => e.id));
+  const schedule = {};
+  if (d.schedule && typeof d.schedule === 'object') {
+    Object.entries(d.schedule).forEach(([mkey, mm]) => {
+      if (!/^\d{4}-\d{2}$/.test(mkey) || !mm || typeof mm !== 'object') return;
+      const em = {};
+      Object.entries(mm).forEach(([eid, row]) => {
+        if (!eids.has(eid) || !row || typeof row !== 'object') return;
+        const rr = {};
+        Object.entries(row).forEach(([day, sid]) => {
+          const dn = +day;
+          if (dn >= 1 && dn <= 31 && sids.has(sid)) rr[dn] = sid;
+        });
+        if (Object.keys(rr).length) em[eid] = rr;
+      });
+      if (Object.keys(em).length) schedule[mkey] = em;
+    });
+  }
+  return {
+    unit: String(d.unit ?? ''),
+    zoom: ZOOMS.includes(+d.zoom) ? +d.zoom : 1,
+    employees, shifts, schedule
+  };
 }
+let dirty = false;
+function save() {
+  dirty = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 350);
+}
+async function flushSave() {
+  clearTimeout(saveTimer);
+  if (!dirty) return;
+  dirty = false;
+  try { await store.set(KEY, JSON.stringify(state)); }
+  catch (e) { dirty = true; toast('存不起來，這次的修改只留在畫面上'); }
+}
+// 關分頁或切到背景時立即寫入，避免 350ms 節流內的修改遺失
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
 function toast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg;
@@ -321,9 +385,10 @@ function toast(msg) {
 
 /* ---------- helpers ---------- */
 const shiftOf = id => state.shifts.find(s => s.id === id);
-function monthMap() {
+/* create=true 才建立本月的空物件；純瀏覽不在 schedule 累積空月份 */
+function monthMap(create) {
   const k = mk(ym.y, ym.m);
-  if (!state.schedule[k]) state.schedule[k] = {};
+  if (!state.schedule[k]) { if (!create) return {}; state.schedule[k] = {}; }
   return state.schedule[k];
 }
 function textOn(hex) {
@@ -340,7 +405,7 @@ function renderPalette() {
     const b = document.createElement('button');
     b.className = 'chip';
     b.setAttribute('aria-pressed', brush === s.id);
-    b.innerHTML = `<span class="sw" style="background:${s.color};color:${textOn(s.color)}">${s.code}</span>${s.name}${i < 9 ? `<span class="kbd">${i + 1}</span>` : ''}`;
+    b.innerHTML = `<span class="sw" style="background:${esc(s.color)};color:${textOn(s.color)}">${esc(s.code)}</span>${esc(s.name)}${i < 9 ? `<span class="kbd">${i + 1}</span>` : ''}`;
     b.onclick = () => { brush = brush === s.id ? null : s.id; renderPalette(); };
     p.appendChild(b);
   });
@@ -362,7 +427,7 @@ function render() {
   $('#unit').value = state.unit || '';
 
   $('#legend').innerHTML = state.shifts.map(s =>
-    `<span><i style="background:${s.color}"></i>${s.code}　${s.name}${s.hours ? ' · ' + s.hours + ' 小時' : ''}</span>`).join('');
+    `<span><i style="background:${esc(s.color)}"></i>${esc(s.code)}　${esc(s.name)}${s.hours ? ' · ' + esc(s.hours) + ' 小時' : ''}</span>`).join('');
 
   const scroll = $('#scroll');
   if (!state.employees.length) {
@@ -403,15 +468,15 @@ function render() {
       const s = row[d] ? shiftOf(row[d]) : null;
       if (s && s.count !== false) { days++; hours += +s.hours || 0; perDay[d]++; }
       const cls = ['cell', w === 6 ? 'sat' : '', w === 0 ? 'sun' : ''].join(' ');
-      const style = s ? ` style="background:${s.color}"` : '';
+      const style = s ? ` style="background:${esc(s.color)}"` : '';
       const inner = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
       h += `<td class="${cls}" data-e="${emp.id}" data-d="${d}"${style}>${inner}</td>`;
     }
-    h += `<td class="c-sum">${days || ''}</td>` + (useHours ? `<td class="c-sum">${hours || ''}</td>` : '') + '</tr>';
+    h += `<td class="c-sum" data-sd="${emp.id}">${days || ''}</td>` + (useHours ? `<td class="c-sum" data-sh="${emp.id}">${hours || ''}</td>` : '') + '</tr>';
   });
 
   h += '</tbody><tfoot><tr><td class="c-name">出勤人數</td>';
-  for (let d = 1; d <= nd; d++) h += `<td>${perDay[d] || ''}</td>`;
+  for (let d = 1; d <= nd; d++) h += `<td data-pc="${d}">${perDay[d] || ''}</td>`;
   h += '<td class="c-sum"></td>' + (useHours ? '<td class="c-sum"></td>' : '') + '</tr></tfoot></table>';
 
   scroll.innerHTML = h;
@@ -422,12 +487,37 @@ function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;'
 function paint(td, clear) {
   const e = td.dataset.e, d = +td.dataset.d;
   if (!e) return;
-  const map = monthMap();
+  const map = monthMap(true);
   if (!map[e]) map[e] = {};
   if (clear || brush === 'erase') delete map[e][d];
   else if (brush) map[e][d] = brush;
   else return;
-  save(); render();
+  if (!Object.keys(map[e]).length) delete map[e];
+  save();
+  // 只更新這一格與相關統計，不整表重繪，拖曳大量格子才不會卡
+  const s = map[e]?.[d] ? shiftOf(map[e][d]) : null;
+  td.style.background = s ? s.color : '';
+  td.innerHTML = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
+  updateSums(e, d);
+}
+function updateSums(e, d) {
+  const map = monthMap();
+  let days = 0, hours = 0;
+  Object.values(map[e] || {}).forEach(id => {
+    const s = shiftOf(id);
+    if (s && s.count !== false) { days++; hours += +s.hours || 0; }
+  });
+  const sd = document.querySelector(`[data-sd="${e}"]`);
+  if (sd) sd.textContent = days || '';
+  const sh = document.querySelector(`[data-sh="${e}"]`);
+  if (sh) sh.textContent = hours || '';
+  let n = 0;
+  state.employees.forEach(emp => {
+    const s = map[emp.id]?.[d] ? shiftOf(map[emp.id][d]) : null;
+    if (s && s.count !== false) n++;
+  });
+  const pc = document.querySelector(`[data-pc="${d}"]`);
+  if (pc) pc.textContent = n || '';
 }
 document.addEventListener('pointerdown', ev => {
   const td = ev.target.closest('td.cell');
@@ -449,12 +539,19 @@ document.addEventListener('contextmenu', ev => {
   ev.preventDefault(); paint(td, true);
 });
 document.addEventListener('keydown', ev => {
-  if (/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
-  if (ev.key === '0') { brush = 'erase'; renderPalette(); }
-  else if (/^[1-9]$/.test(ev.key)) {
-    const s = state.shifts[+ev.key - 1];
-    if (s) { brush = s.id; renderPalette(); }
-  } else if (ev.key === 'Escape') { closeModal(); }
+  if (ev.key === 'Escape') { closeModal(); return; }
+  if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+  // 優先用 ev.code 判斷實體按鍵：中文輸入法（注音/倉頡）開啟時 ev.key 會是
+  // 'Process' 而不是數字，只看 ev.key 快捷鍵會完全沒反應；ev.code 不受影響，
+  // 也順便支援數字鍵盤（Numpad）。少數虛擬鍵盤 ev.code 是空字串，再用 ev.key 備援。
+  const m = /^(?:Digit|Numpad)(\d)$/.exec(ev.code);
+  const n = m ? +m[1] : (/^[0-9]$/.test(ev.key) ? +ev.key : -1);
+  if (n < 0) return;
+  if (n === 0) brush = 'erase';
+  else if (state.shifts[n - 1]) brush = state.shifts[n - 1].id;
+  else return;
+  renderPalette();
 });
 
 /* ---------- modals ---------- */
@@ -517,10 +614,10 @@ function openStaff() {
 
 function openShifts() {
   const rows = state.shifts.map((s, i) => `<div class="row" data-i="${i}">
-      <input type="color" value="${s.color}" data-f="color">
+      <input type="color" value="${esc(s.color)}" data-f="color">
       <input type="text" class="code" maxlength="2" value="${esc(s.code)}" data-f="code" title="格子裡顯示的字">
       <input type="text" class="grow" value="${esc(s.name)}" placeholder="班別名稱" data-f="name">
-      <input type="number" min="0" max="24" step="0.5" value="${s.hours}" data-f="hours" title="時數">
+      <input type="number" min="0" max="24" step="0.5" value="${+s.hours || 0}" data-f="hours" title="時數">
       <label><input type="checkbox" ${s.count !== false ? 'checked' : ''} data-f="count">計入出勤</label>
       <button class="mini danger" data-del title="刪除">✕</button>
     </div>`).join('');
@@ -535,7 +632,7 @@ function openShifts() {
       const ev = inp.type === 'color' ? 'input' : (inp.type === 'checkbox' ? 'change' : 'input');
       inp.addEventListener(ev, () => {
         const f = inp.dataset.f;
-        state.shifts[i][f] = f === 'count' ? inp.checked : (f === 'hours' ? +inp.value : inp.value);
+        state.shifts[i][f] = f === 'count' ? inp.checked : (f === 'hours' ? Math.max(0, Math.min(24, +inp.value || 0)) : inp.value);
         save(); render(); renderPalette();
       });
     });
@@ -546,6 +643,10 @@ function openShifts() {
         Object.keys(row).forEach(d => { if (row[d] === s.id) delete row[d]; })));
       if (brush === s.id) brush = null;
       state.shifts.splice(i, 1);
+      if (!state.shifts.length) {
+        state.shifts = seed().shifts;
+        toast('至少要保留一個班別，已恢復預設班別');
+      }
       save(); render(); renderPalette(); openShifts();
     };
   });
@@ -569,6 +670,12 @@ $('#open-staff').onclick = openStaff;
 $('#open-shifts').onclick = openShifts;
 $('#print').onclick = () => window.print();
 $('#unit').oninput = e => { state.unit = e.target.value; save(); };
+function applyZoom() {
+  const z = ZOOMS.includes(+state.zoom) ? +state.zoom : 1;
+  document.documentElement.dataset.zoom = z;
+  $('#zoom').value = String(z);
+}
+$('#zoom').onchange = e => { state.zoom = +e.target.value; applyZoom(); save(); };
 $('#copy-prev').onclick = () => {
   const prev = new Date(ym.y, ym.m - 1, 1);
   const src = state.schedule[mk(prev.getFullYear(), prev.getMonth())];
@@ -628,11 +735,11 @@ function openHelp() {
       const r = new FileReader();
       r.onload = () => {
         try {
-          const d = JSON.parse(r.result);
-          if (!d.shifts || !d.employees) throw 0;
+          const d = normBackup(JSON.parse(r.result));
+          if (!d) throw 0;
           if (!confirm('匯入會覆蓋目前的所有資料，確定嗎？')) return;
           state = d; brush = state.shifts[0]?.id || null;
-          save(); render(); renderPalette(); closeModal(); toast('已匯入備份');
+          applyZoom(); save(); render(); renderPalette(); closeModal(); toast('已匯入備份');
         } catch (e) { toast('這個檔案讀不出來，請選擇本工具匯出的備份檔'); }
       };
       r.readAsText(file);
@@ -643,7 +750,7 @@ function openHelp() {
     if (!confirm('清除所有員工、班別與班表？這個動作無法復原，建議先匯出備份。')) return;
     state = seed();
     try { await store.del(KEY); } catch (e) { }
-    brush = state.shifts[0].id; render(); renderPalette(); closeModal();
+    brush = state.shifts[0].id; applyZoom(); render(); renderPalette(); closeModal();
   };
 }
 $('#help').onclick = openHelp;
@@ -654,9 +761,9 @@ window.openHelp = openHelp;
 (async () => {
   const n = new Date();
   ym = { y: n.getFullYear(), m: n.getMonth() };
-  state = (await load()) || seed();
-  if (!state.shifts) state = seed();
+  state = normBackup(await load()) || seed();
   brush = state.shifts[0] ? state.shifts[0].id : null;
+  applyZoom();
   renderPalette();
   render();
 })();
