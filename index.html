@@ -244,6 +244,7 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
 /* ---------- 時間設定小視窗（疊在個人卡之上） ---------- */
 .pop-back{position:fixed;inset:0;background:rgba(21,26,33,.3);display:grid;place-items:center;z-index:60;padding:16px}
 .pop{background:var(--panel);border:1px solid var(--rule-strong);border-radius:4px;width:min(390px,100%);padding:14px 16px 12px;box-shadow:0 8px 28px rgba(21,26,33,.18)}
+.pop.wide2{width:min(760px,100%);max-height:86vh;overflow:auto}
 .pop h3{margin:0 0 2px;font-size:14px;font-weight:600}
 .pop .who{margin:0 0 11px;font-size:12px;color:var(--muted)}
 .pop .tl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
@@ -254,6 +255,39 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
 .pop .calc b{font-family:var(--mono);font-size:15px}
 .pop .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .pop .acts .btn{padding:5px 10px;font-size:12.5px}
+
+/* ---------- 時間下拉選單 ---------- */
+.tsel{display:inline-flex;align-items:center;gap:2px}
+.tsel select{
+  border:1px solid var(--rule-strong);border-radius:3px;padding:5px 4px;
+  font-family:var(--mono);font-size:13px;background:var(--panel);
+}
+.tsel select:hover{border-color:var(--indigo)}
+.tsel i{font-style:normal;color:var(--muted);font-family:var(--mono)}
+select.brk{border:1px solid var(--rule-strong);border-radius:3px;padding:5px 4px;font-family:var(--mono);font-size:13px;background:var(--panel)}
+
+/* ---------- 人力空窗 ---------- */
+tfoot tr.gap td{color:#B4232A;font-weight:700}
+tfoot tr.gap td.c-name{color:#B4232A}
+tfoot tr.gap td[data-gap]{cursor:pointer}
+tfoot tr.gap td[data-gap]:hover{box-shadow:0 0 0 2px #B4232A inset}
+th.c-day{cursor:pointer}
+th.c-day:hover{background:#EDF0F7;color:var(--indigo)}
+.row.biz{gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:8px}
+.row.biz .hint3{flex-basis:100%;font-size:11.5px;color:var(--muted);margin:0}
+/* 當日人力時間軸 */
+.tl-wrap{margin-top:4px}
+.tl-row{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:center;margin-bottom:5px}
+.tl-row .who2{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-bar{position:relative;height:22px;background:#F2F3F6;border:1px solid var(--rule);border-radius:3px}
+.tl-bar .seg{position:absolute;top:0;bottom:0;border-radius:2px;font-family:var(--mono);font-size:10px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap}
+.tl-ruler{display:grid;grid-template-columns:76px 1fr;gap:8px;margin-bottom:3px}
+.tl-ruler .ticks{position:relative;height:14px}
+.tl-ruler .ticks span{position:absolute;top:0;font-family:var(--mono);font-size:9.5px;color:var(--muted);transform:translateX(-50%)}
+.tl-gapbar{position:relative;height:16px;background:#F2F3F6;border:1px solid var(--rule);border-radius:3px}
+.tl-gapbar .g{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#F6D5D6,#F6D5D6 4px,#FBEAEA 4px,#FBEAEA 8px);border:1px solid #E09A9D}
+.tl-none{font-size:12.5px;color:var(--muted);padding:10px 0}
 
 /* ---------- 班別設定的時間欄位 ---------- */
 .row.sh{flex-wrap:wrap}
@@ -367,6 +401,7 @@ function seed() {
     zoom: 1,
     baseWage: 0,
     savedAt: 0,
+    biz: { on: false, start: '09:00', end: '21:00' },
     employees: [],
     shifts: [
       { id: uid(), code: '早', name: '早班', color: '#F6C445', start: '08:00', end: '16:00', brk: 0, hours: 8, count: true },
@@ -463,6 +498,10 @@ function normBackup(d) {
     zoom: ZOOMS.includes(+d.zoom) ? +d.zoom : 1,
     baseWage: Math.max(0, Math.min(10000, +d.baseWage || 0)),
     savedAt: Math.max(0, +d.savedAt || 0),
+    biz: (() => {
+      const b = (d.biz && typeof d.biz === 'object') ? d.biz : {};
+      return { on: b.on === true, start: normTime(b.start) || '09:00', end: normTime(b.end) || '21:00' };
+    })(),
     employees, shifts, schedule
   };
 }
@@ -580,6 +619,33 @@ function spanHours(st, en, brk) {
   return Math.max(0, Math.round(d / 60 * 100) / 100);
 }
 const fmtH = n => String(Math.round(n * 100) / 100);
+const hhmm = min => String(Math.floor((min % 1440 + 1440) % 1440 / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
+
+/* 時間用下拉選單挑，比 type=time 好按，長輩也不會卡在鍵盤輸入 */
+const HR_OPTS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MI_OPTS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
+const BRK_OPTS = [0, 10, 15, 20, 30, 45, 60, 90, 120];
+function timeSel(key, val, allowEmpty) {
+  const p = String(val || '').split(':');
+  const h = p[0] || '', mi = p[1] || '00';
+  const hs = (allowEmpty ? '<option value="">--</option>' : '') +
+    HR_OPTS.map(o => `<option value="${o}"${o === h ? ' selected' : ''}>${o}</option>`).join('');
+  // 舊資料的分鐘可能不是 5 的倍數，補進選項免得被吃掉
+  const mins = MI_OPTS.includes(mi) ? MI_OPTS : MI_OPTS.concat(mi).sort();
+  const ms = mins.map(o => `<option value="${o}"${o === mi ? ' selected' : ''}>${o}</option>`).join('');
+  return `<span class="tsel" data-time="${key}"><select data-p="h" aria-label="時">${hs}</select><i>:</i><select data-p="m" aria-label="分">${ms}</select></span>`;
+}
+function readSel(scope, key) {
+  const w = scope.querySelector(`[data-time="${key}"]`);
+  if (!w) return '';
+  const h = w.querySelector('[data-p="h"]').value;
+  return h ? normTime(h + ':' + (w.querySelector('[data-p="m"]').value || '00')) : '';
+}
+function brkSel(val) {
+  const v = Math.max(0, Math.min(720, Math.round(+val || 0)));
+  const opts = BRK_OPTS.includes(v) ? BRK_OPTS : BRK_OPTS.concat(v).sort((a, b) => a - b);
+  return `<select class="brk" data-brk aria-label="休息分鐘">${opts.map(o => `<option value="${o}"${o === v ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+}
 const hasT = o => !!(o && o.start && o.end);
 /* 格子可能是班別 id 字串，或帶單日時間的物件 */
 const cellId = v => (typeof v === 'string' ? v : (v && typeof v === 'object' ? v.s : null));
@@ -629,6 +695,65 @@ function textOn(hex) {
   const c = hex.replace('#', '');
   const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
   return (0.299 * r + 0.587 * g + 0.114 * b) > 158 ? '#151A21' : '#fff';
+}
+
+/* ---------- 人力空窗 ----------
+   把當天所有「計入出勤且有時間」的班別攤成時間區間，合併後看營業時間內
+   還有哪幾段沒人。前一天的跨夜班會蓋到今天凌晨，所以要一起算進來。 */
+function dayGaps(y, m, d) {
+  const b = state.biz;
+  if (!b || !b.on) return null;
+  const bs = toMin(b.start);
+  let be = toMin(b.end);
+  if (bs == null || be == null) return null;
+  if (be <= bs) be += 1440;               // 營業到隔天（例如 18:00–02:00）
+  const map = state.schedule[mk(y, m)] || {};
+  const iv = [];
+  const add = (v, empId, off) => {
+    const i = cellInfo(v, empId);
+    if (!i || i.shift.count === false || !i.start) return;
+    let a = toMin(i.start), z = toMin(i.end);
+    if (a == null || z == null) return;
+    if (z <= a) z += 1440;                // 跨夜
+    iv.push([a + off, z + off]);
+  };
+  const pm = new Date(y, m - 1, 1);
+  const pk = mk(pm.getFullYear(), pm.getMonth());
+  const pnd = daysIn(pm.getFullYear(), pm.getMonth());
+  state.employees.forEach(e => {
+    const row = map[e.id] || {};
+    add(row[d], e.id, 0);
+    // 前一天的班可能跨夜過來
+    if (d > 1) add(row[d - 1], e.id, -1440);
+    else add(((state.schedule[pk] || {})[e.id] || {})[pnd], e.id, -1440);
+  });
+  const clipped = iv.map(([a, z]) => [Math.max(a, bs), Math.min(z, be)])
+    .filter(([a, z]) => z > a).sort((p, q) => p[0] - q[0]);
+  const gaps = [];
+  let cur = bs;
+  clipped.forEach(([a, z]) => { if (a > cur) gaps.push([cur, a]); cur = Math.max(cur, z); });
+  if (cur < be) gaps.push([cur, be]);
+  return { gaps, mins: gaps.reduce((s, [a, z]) => s + (z - a), 0), bs, be };
+}
+const gapTip = g => (g && g.mins > 0)
+  ? g.gaps.map(([a, z]) => hhmm(a) + '–' + hhmm(z)).join('、') + ' 沒有人'
+  : '這天營業時間都有人';
+/* 只重畫受影響的日子：改一天的班會同時影響當天與隔天（跨夜） */
+function updateGaps(days) {
+  if (!state.biz || !state.biz.on) return;
+  const nd = daysIn(ym.y, ym.m);
+  (days || Array.from({ length: nd }, (_, i) => i + 1)).forEach(d => {
+    if (d < 1 || d > nd) return;
+    const td = document.querySelector(`td[data-gap="${d}"]`);
+    if (!td) return;
+    const g = dayGaps(ym.y, ym.m, d);
+    td.textContent = (g && g.mins > 0) ? fmtH(g.mins / 60) : '';
+    td.title = gapTip(g);
+  });
+  let n = 0;
+  for (let d = 1; d <= nd; d++) { const g = dayGaps(ym.y, ym.m, d); if (g && g.mins > 0) n++; }
+  const tot = document.querySelector('tr.gap td.c-sum');
+  if (tot) tot.textContent = n || '';
 }
 
 /* ---------- palette ---------- */
@@ -690,7 +815,7 @@ function render() {
   for (let d = 1; d <= nd; d++) {
     const w = dow(y, m, d);
     const cls = ['c-day', w === 6 ? 'sat' : '', w === 0 ? 'sun' : '', isThis && d === now.getDate() ? 'today' : ''].join(' ');
-    h += `<th class="${cls}"><span class="d">${d}</span><span class="w">${WD[w]}</span></th>`;
+    h += `<th class="${cls}" data-day="${d}" title="點日期看這天的人力時間軸"><span class="d">${d}</span><span class="w">${WD[w]}</span></th>`;
   }
   h += '<th class="c-sum">天</th>' + (useHours ? '<th class="c-sum">時</th>' : '') + '</tr></thead><tbody>';
 
@@ -713,6 +838,17 @@ function render() {
   h += '</tbody><tfoot><tr class="total"><td class="c-name">出勤人數</td>';
   for (let d = 1; d <= nd; d++) h += `<td data-pc="${d}">${perDay[d] || ''}</td>`;
   h += '<td class="c-sum"></td>' + (useHours ? '<td class="c-sum"></td>' : '') + '</tr>';
+  // 人力空窗：營業時間內沒人的時數，最右欄是整月有空窗的天數
+  if (state.biz && state.biz.on) {
+    let gapDays = 0;
+    let gh = '<tr class="gap"><td class="c-name" title="營業時間內沒有人上班的時數">人力空窗</td>';
+    for (let d = 1; d <= nd; d++) {
+      const g = dayGaps(y, m, d);
+      if (g && g.mins > 0) gapDays++;
+      gh += `<td data-gap="${d}" title="${esc(gapTip(g))}">${(g && g.mins > 0) ? fmtH(g.mins / 60) : ''}</td>`;
+    }
+    h += gh + `<td class="c-sum">${gapDays || ''}</td>` + (useHours ? '<td class="c-sum"></td>' : '') + '</tr>';
+  }
   // 各班別每日人數；最右欄是該班別整月人次
   state.shifts.forEach(s => {
     let tot = 0;
@@ -780,6 +916,7 @@ function updateSums(e, d) {
   });
   const pc = document.querySelector(`[data-pc="${d}"]`);
   if (pc) pc.textContent = n || '';
+  updateGaps([d, d + 1]);   // 跨夜班會影響隔天凌晨
   // 各班別統計：這一天每個班別的人數，以及各班別整月人次
   const cnt = {};
   state.employees.forEach(emp => {
@@ -818,6 +955,13 @@ document.addEventListener('contextmenu', ev => {
   const td = ev.target.closest('td.cell');
   if (!td) return;
   ev.preventDefault(); paint(td, true);
+});
+// 點日期標題或空窗格子 → 當天人力時間軸
+document.addEventListener('click', ev => {
+  const th = ev.target.closest('th.c-day');
+  if (th && th.dataset.day) { openDayView(+th.dataset.day); return; }
+  const gt = ev.target.closest('td[data-gap]');
+  if (gt) openDayView(+gt.dataset.gap);
 });
 // 雙擊格子 → 設定這天的上下班時間
 document.addEventListener('dblclick', ev => {
@@ -884,9 +1028,9 @@ function openTimePop(empId, day) {
       <h3>${esc(emp.name)}　${when}　${esc(info.shift.name)}</h3>
       <p class="who">${from}　·　${esc(dflt)}${pers ? `　·　個人固定 ${esc(pers.start + '–' + pers.end)}` : ''}</p>
       <div class="tl">
-        <label>上班</label><input type="time" id="p-st" value="${esc(info.start)}">
-        <label>下班</label><input type="time" id="p-en" value="${esc(info.end)}">
-        <label>休息</label><input type="number" id="p-br" min="0" max="720" step="5" value="${info.brk}"><label>分</label>
+        <label>上班</label>${timeSel('st', info.start, true)}
+        <label>下班</label>${timeSel('en', info.end, true)}
+        <label>休息</label>${brkSel(info.brk)}<label>分</label>
       </div>
       <p class="calc">這天時數 <b id="p-h">${fmtH(info.hours)}</b> 小時<span id="p-warn" style="color:#B4232A"></span></p>
       <div class="acts">
@@ -900,17 +1044,17 @@ function openTimePop(empId, day) {
   document.body.appendChild(back);
   if (!info) return;
 
-  const st = back.querySelector('#p-st'), en = back.querySelector('#p-en'), br = back.querySelector('#p-br');
-  const vals = () => ({ st: normTime(st.value), en: normTime(en.value), br: Math.max(0, Math.min(720, +br.value || 0)) });
+  const pop = back.querySelector('.pop');
+  const vals = () => ({ st: readSel(pop, 'st'), en: readSel(pop, 'en'), br: Math.max(0, Math.min(720, +pop.querySelector('[data-brk]').value || 0)) });
   const sync = () => {
     const v2 = vals();
     const ok = v2.st && v2.en;
     back.querySelector('#p-h').textContent = ok ? fmtH(spanHours(v2.st, v2.en, v2.br)) : fmtH(info.shift.hours);
-    back.querySelector('#p-warn').textContent = ok ? '' : '　（上下班時間都要填）';
+    back.querySelector('#p-warn').textContent = ok ? '' : '　（上下班都要選）';
     back.querySelector('#p-day').disabled = !ok;
     back.querySelector('#p-emp').disabled = !ok;
   };
-  [st, en, br].forEach(el => el.addEventListener('input', sync));
+  pop.querySelectorAll('select').forEach(el => el.addEventListener('change', sync));
   sync();
 
   back.querySelector('#p-day').onclick = () => {
@@ -935,8 +1079,76 @@ function openTimePop(empId, day) {
   };
 }
 
+/* ---------- 當日人力時間軸 ----------
+   點日期或空窗格子打開，一眼看出這天誰在店裡、哪幾段沒人。 */
+function openDayView(day) {
+  closePop();
+  const y = ym.y, m = ym.m, nd = daysIn(y, m);
+  if (day < 1 || day > nd) return;
+  const map = state.schedule[mk(y, m)] || {};
+  const rows = [];
+  state.employees.forEach(e => {
+    const i = cellInfo((map[e.id] || {})[day], e.id);
+    if (!i) return;
+    let a = null, z = null;
+    if (i.start) { a = toMin(i.start); z = toMin(i.end); if (z <= a) z += 1440; }
+    rows.push({ name: e.name, i, a, z });
+  });
+  const g = dayGaps(y, m, day);
+  let lo, hi;
+  if (g) { lo = g.bs; hi = g.be; }
+  else {
+    const ts = rows.filter(r => r.a != null);
+    lo = ts.length ? Math.min(...ts.map(r => r.a)) : 8 * 60;
+    hi = ts.length ? Math.max(...ts.map(r => r.z)) : 20 * 60;
+    if (hi - lo < 60) hi = lo + 60;
+  }
+  const span = hi - lo;
+  const pct = v => Math.max(0, Math.min(100, (v - lo) / span * 100));
+
+  // 每 2 小時一個刻度
+  let ticks = '';
+  const step = span > 12 * 60 ? 180 : 120;
+  for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) ticks += `<span style="left:${pct(t)}%">${hhmm(t)}</span>`;
+
+  const bars = rows.length ? rows.map(r => {
+    let seg;
+    if (r.a == null) {
+      seg = `<div class="seg" style="left:0;right:0;background:#EDEEF1;color:var(--muted)">${esc(r.i.shift.name)}（沒設時間，不列入空窗計算）</div>`;
+    } else {
+      const l = pct(r.a), w = Math.max(1.5, pct(r.z) - l);
+      const out = (r.a < lo || r.z > hi) ? ' ⇢' : '';
+      seg = `<div class="seg" style="left:${l}%;width:${w}%;background:${esc(r.i.shift.color)};color:${textOn(r.i.shift.color)}">${esc(r.i.start + '–' + r.i.end)}${out}</div>`;
+    }
+    return `<div class="tl-row"><span class="who2">${esc(r.name)}</span><div class="tl-bar">${seg}</div></div>`;
+  }).join('') : '<p class="tl-none">這天沒有人排班。</p>';
+
+  const gapBar = g ? `<div class="tl-row" style="margin-top:8px">
+      <span class="who2" style="color:${g.mins > 0 ? '#B4232A' : 'var(--muted)'}">${g.mins > 0 ? '空窗 ' + fmtH(g.mins / 60) + ' 小時' : '全時段有人'}</span>
+      <div class="tl-gapbar">${g.gaps.map(([a, z]) => `<div class="g" style="left:${pct(a)}%;width:${Math.max(0.8, pct(z) - pct(a))}%" title="${hhmm(a)}–${hhmm(z)} 沒有人"></div>`).join('')}</div>
+    </div>` : '<p class="tl-none">要偵測人力空窗，請到「班別」視窗開啟「檢查人力空窗」並設定營業時間。</p>';
+
+  const w = dow(y, m, day);
+  const back = document.createElement('div');
+  back.className = 'pop-back no-print';
+  back.innerHTML = `<div class="pop wide2">
+    <h3>${m + 1} 月 ${day} 日（${WD[w]}）人力時間軸</h3>
+    <p class="who">${g ? `營業時間 ${esc(g ? hhmm(g.bs) + '–' + hhmm(g.be % 1440) : '')}` : '顯示範圍：當天最早到最晚'}　·　共 ${rows.length} 人排班</p>
+    <div class="tl-wrap">
+      <div class="tl-ruler"><span></span><div class="ticks">${ticks}</div></div>
+      ${bars}${gapBar}
+    </div>
+    <div class="acts" style="margin-top:12px"><span style="flex:1"></span><button class="btn" data-x>關閉</button></div>
+  </div>`;
+  back.addEventListener('click', ev => { if (ev.target === back || ev.target.dataset.x !== undefined) closePop(); });
+  document.body.appendChild(back);
+}
+
 /* ---------- 個人班表卡 ---------- */
 let cardEmp = null, cardRef = null;
+/* 個人固定時間區塊的展開狀態，以及「只選了一邊」時的暫存，
+   兩者都要跨重繪保留，否則選一個欄位畫面就跳掉、填不完 */
+let empTimesOpen = false, empTimesDraft = {};
 const empOf = id => state.employees.find(e => e.id === id);
 const wageOf = emp => (emp && emp.wage != null && emp.wage !== '') ? +emp.wage : (+state.baseWage || 0);
 const money = n => 'NT$ ' + Math.round(n).toLocaleString('en-US');
@@ -967,6 +1179,8 @@ function openCard(empId) {
   o.querySelector('.modal').classList.add('wide');
   // modal() 內部會先 closeModal()，所以卡片狀態要在建立之後才設
   cardEmp = empId; cardRef = null;
+  empTimesDraft = {};
+  empTimesOpen = Object.keys(emp.times || {}).length > 0;
   o.addEventListener('click', ev => { if (ev.target === o || ev.target.dataset.close !== undefined) cardEmp = cardRef = null; });
   o.querySelector('#card-img').onclick = () => {
     const f = document.createElement('input');
@@ -1060,33 +1274,44 @@ function renderCard() {
 function empTimesHTML(emp) {
   const t = emp.times || {};
   const rows = state.shifts.map(s => {
-    const p = t[s.id] || {};
+    const p = empTimesDraft[s.id] || t[s.id] || {};
     const dflt = hasT(s) ? `${s.start}–${s.end}` : `${fmtH(s.hours)} 小時`;
     return `<div class="er" data-sid="${s.id}">
       <span class="nm2"><i class="fi" style="background:${esc(s.color)}"></i>${esc(s.name)}</span>
-      <input type="time" data-t="start" value="${esc(p.start || '')}">
-      <input type="time" data-t="end" value="${esc(p.end || '')}">
-      <input type="number" data-t="brk" min="0" max="720" step="5" value="${p.brk || 0}" title="休息分鐘"><span style="color:var(--muted)">分休息</span>
+      ${timeSel('start', p.start, true)}<span style="color:var(--muted)">到</span>${timeSel('end', p.end, true)}
+      休息 ${brkSel(p.brk)} 分
       <span style="margin-left:auto;color:var(--muted)">${hasT(p) ? fmtH(spanHours(p.start, p.end, p.brk)) + ' 小時' : '預設 ' + esc(dflt)}</span>
     </div>`;
   }).join('');
-  return `<details class="emp-times"${Object.keys(t).length ? ' open' : ''}>
-    <summary>個人固定時間（${Object.keys(t).length ? '已設定 ' + Object.keys(t).length + ' 個班別' : '未設定，跟著班別預設'}）</summary>
+  const n = Object.keys(t).length;
+  return `<details class="emp-times"${empTimesOpen ? ' open' : ''}>
+    <summary>個人固定時間（${n ? '已設定 ' + n + ' 個班別' : '未設定，跟著班別預設'}）</summary>
     ${rows}
-    <p class="hint2">填了就是這個人排該班別時的固定上下班時間，每個月都適用。留空代表跟著「班別」設定走。單一天要不一樣，點月曆格子裡的時間。</p>
+    <p class="hint2">上下班兩個時間都選了才會生效，是這個人排該班別時的固定時間，每個月都適用。時間選 <b>--</b> 代表跟著「班別」設定走。單一天要不一樣，點月曆格子裡的時間。</p>
   </details>`;
 }
 function bindEmpTimes(box, emp) {
+  const det = box.querySelector('.emp-times');
+  if (det) det.addEventListener('toggle', () => empTimesOpen = det.open);
   box.querySelectorAll('.emp-times .er').forEach(r => {
     const sid = r.dataset.sid;
-    r.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => {
-      const g = k => r.querySelector(`[data-t="${k}"]`).value;
-      const start = normTime(g('start')), end = normTime(g('end'));
-      if (!emp.times) emp.times = {};
-      if (start && end) emp.times[sid] = { start, end, brk: Math.max(0, Math.min(720, +g('brk') || 0)) };
-      else delete emp.times[sid];
-      save(); render(); renderCard();
-    }));
+    r.querySelectorAll('select').forEach(el => {
+      // 重繪後要把焦點放回同一個欄位，不然選完一個就跳掉
+      const path = el.dataset.brk !== undefined ? '[data-brk]'
+        : `[data-time="${el.closest('[data-time]').dataset.time}"] [data-p="${el.dataset.p}"]`;
+      el.addEventListener('change', () => {
+        const start = readSel(r, 'start'), end = readSel(r, 'end');
+        const brk = Math.max(0, Math.min(720, +r.querySelector('[data-brk]').value || 0));
+        // 只選了一邊時先存進暫存，畫面才不會把剛選的清掉；兩邊都選好才寫入設定
+        empTimesDraft[sid] = { start, end, brk };
+        if (!emp.times) emp.times = {};
+        if (start && end) emp.times[sid] = { start, end, brk };
+        else delete emp.times[sid];
+        save(); render(); renderCard();
+        const again = document.querySelector(`.emp-times .er[data-sid="${sid}"] ${path}`);
+        if (again) again.focus();
+      });
+    });
   });
 }
 
@@ -1238,39 +1463,63 @@ function openShifts() {
       <input type="text" class="grow" value="${esc(s.name)}" placeholder="班別名稱" data-f="name">
       <label><input type="checkbox" ${s.count !== false ? 'checked' : ''} data-f="count">計入出勤</label>
       <button class="mini danger" data-del title="刪除">✕</button>
-      <span class="tg">上班<input type="time" data-f="start" value="${esc(s.start || '')}">
-        下班<input type="time" data-f="end" value="${esc(s.end || '')}">
-        休息<input type="number" min="0" max="720" step="5" value="${s.brk || 0}" data-f="brk">分
+      <span class="tg">上班${timeSel('start', s.start, true)}
+        下班${timeSel('end', s.end, true)}
+        休息${brkSel(s.brk)}分
         <span class="hv" data-hv>= ${fmtH(s.hours)} 小時</span>
         <input type="number" min="0" max="24" step="0.5" value="${+s.hours || 0}" data-f="hours" title="直接填時數（沒填上下班時間時使用）"${hasT(s) ? ' style="display:none"' : ''}>
       </span>
     </div>`).join('');
 
-  const o = modal('班別', rows + `<div class="field"><p>填了上下班時間，時數會自動算出來（跨夜班會自動加一天，休息分鐘不計薪）。時間留空就直接填時數。「計入出勤」沒勾的班別（例如休假）不會算進天數、時數與底部的每日出勤人數。</p>
+  const b = state.biz || { on: false, start: '09:00', end: '21:00' };
+  const bizBox = `<div class="row biz">
+      <label style="font-size:12.5px;color:var(--ink-soft);font-weight:600">
+        <input type="checkbox" id="biz-on"${b.on ? ' checked' : ''}> 檢查人力空窗</label>
+      <span style="font-size:12px;color:var(--muted)">需要有人的時間</span>
+      ${timeSel('bstart', b.start)}<span style="color:var(--muted)">到</span>${timeSel('bend', b.end)}
+      <p class="hint3">開啟後，主表最下面會多一列「人力空窗」，顯示每天在這段時間內沒有人上班的時數。點那個數字或點上方的日期，可以看當天的人力時間軸。只有設了上下班時間的班別才算得進去。</p>
+    </div>`;
+
+  const o = modal('班別', bizBox + rows + `<div class="field"><p>填了上下班時間，時數會自動算出來（跨夜班會自動加一天，休息分鐘不計薪）。時間留空就直接填時數。「計入出勤」沒勾的班別（例如休假）不會算進天數、時數與底部的每日出勤人數。</p>
       <p>每個人的上下班時間不一樣時：在個人班表卡設「個人固定時間」；只有某一天不同，就在主表雙擊那一格。</p></div>`,
     `<button class="btn" id="add-shift">新增班別</button><span style="flex:1"></span>
      <button class="btn btn-solid" data-close>完成</button>`);
 
+  const bizRow = o.querySelector('.row.biz');
+  const applyBiz = () => {
+    state.biz = {
+      on: bizRow.querySelector('#biz-on').checked,
+      start: readSel(bizRow, 'bstart') || '09:00',
+      end: readSel(bizRow, 'bend') || '21:00'
+    };
+    save(); render();
+  };
+  bizRow.querySelectorAll('input,select').forEach(el => el.addEventListener('change', applyBiz));
+
   o.querySelectorAll('.row.sh').forEach(r => {
     const i = +r.dataset.i;
-    r.querySelectorAll('input').forEach(inp => {
-      // 文字類要即時反應，時間／數字／勾選等 change 時再處理，避免打到一半就重算
-      const evName = (inp.type === 'text' || inp.type === 'color') ? 'input' : 'change';
-      inp.addEventListener(evName, () => {
-        const s = state.shifts[i], f = inp.dataset.f;
-        if (f === 'count') s.count = inp.checked;
-        else if (f === 'start' || f === 'end') s[f] = normTime(inp.value);
-        else if (f === 'brk') s.brk = Math.max(0, Math.min(720, Math.round(+inp.value || 0)));
-        else if (f === 'hours') s.hours = Math.max(0, Math.min(24, +inp.value || 0));
-        else s[f] = inp.value;
-        // 起訖都在就以時間為準；否則保留手填的時數
-        if (hasT(s)) s.hours = spanHours(s.start, s.end, s.brk);
-        const hv = r.querySelector('[data-hv]');
-        if (hv) hv.textContent = '= ' + fmtH(s.hours) + ' 小時';
-        const hi = r.querySelector('[data-f="hours"]');
-        if (hi) { hi.style.display = hasT(s) ? 'none' : ''; if (hasT(s)) hi.value = fmtH(s.hours); }
-        save(); render(); renderPalette(); if (cardEmp) renderCard();
-      });
+    const apply = () => {
+      const s = state.shifts[i];
+      const g = f => r.querySelector(`[data-f="${f}"]`);
+      s.color = g('color').value;
+      s.code = g('code').value;
+      s.name = g('name').value;
+      s.count = g('count').checked;
+      s.start = readSel(r, 'start');
+      s.end = readSel(r, 'end');
+      s.brk = Math.max(0, Math.min(720, +r.querySelector('[data-brk]').value || 0));
+      // 起訖都選了就以時間為準；否則保留手填的時數
+      if (hasT(s)) s.hours = spanHours(s.start, s.end, s.brk);
+      else s.hours = Math.max(0, Math.min(24, +g('hours').value || 0));
+      r.querySelector('[data-hv]').textContent = '= ' + fmtH(s.hours) + ' 小時';
+      const hi = g('hours');
+      hi.style.display = hasT(s) ? 'none' : '';
+      if (hasT(s)) hi.value = fmtH(s.hours);
+      save(); render(); renderPalette(); if (cardEmp) renderCard();
+    };
+    r.querySelectorAll('input,select').forEach(el => {
+      // 文字類要即時反應，其餘等 change 再處理，避免選到一半就重算
+      el.addEventListener((el.type === 'text' || el.type === 'color') ? 'input' : 'change', apply);
     });
     r.querySelector('[data-del]').onclick = () => {
       const s = state.shifts[i];
@@ -1338,6 +1587,7 @@ function openHelp() {
       <li><b>每個人時間不一樣</b><span>三層設定，只會採用最先成立的那一層：<b>單日例外</b>（在主表雙擊那一格，或在個人卡點日期下方的時間）只影響那一天，格子右上角會出現小角標；<b>個人固定時間</b>（個人卡下方「個人固定時間」）是那個人排該班別時每次都用的時間，每個月都適用；都沒設就用<b>班別預設</b>。在時間視窗按「設為個人固定」可以直接把這次填的時間變成那個人的固定時間。注意：用筆刷重新塗過的格子會回到預設時間。</span></li>
       <li><b>排班</b><span>在筆刷列選一個班別，在格子上點一下就填入。按住滑鼠左鍵拖曳可以一次填一整排，適合連上五天。填錯就按右鍵清除，或選「清除」筆刷再塗。</span></li>
       <li><b>看統計</b><span>右邊兩欄是每個人的出勤天數與時數，下面是每天的出勤人數，再往下每個班別各一列，看得到每天各班有幾個人、整月各班總人次。全部自動計算。</span></li>
+      <li><b>有沒有人力空窗</b><span>每個人時間都不一樣時，光看「出勤人數」看不出店裡幾點沒人。到「班別」視窗勾「檢查人力空窗」並設定需要有人的時間（例如 09:00 到 21:00），主表最下面就會多一列「人力空窗」，紅色數字是那天沒人的時數，滑過去看是哪幾段。<b>點上方的日期</b>（或點紅色數字）會打開當天的人力時間軸，每個人一條色條，下面那條斜線就是沒人的時段，補班補在哪一目瞭然。沒設上下班時間的班別算不進來，會在時間軸上標示出來。</span></li>
       <li><b>個人班表卡與算錢</b><span>點表格左邊的姓名，會開啟那個人的月曆卡片。卡片裡可以直接排班（上面有同一組筆刷），跟主表是同一份資料，改哪邊另一邊都會跟著變。月底核對打卡時，沒出席的日子就在卡片裡改成休假，時數與金額立刻重算。時薪留空會套用「員工」視窗裡設定的基本時薪，個別員工也可以在卡片裡單獨填。</span></li>
       <li><b>發給員工</b><span>在個人卡按「下載 JPG」，會存成一張班表圖片可以傳給本人，每天的上下班時間都會印在上面。預設不含薪資，要對帳時勾「圖片含薪資」再下載。</span></li>
       <li><b>對照紙本核銷</b><span>在個人卡按「匯入對照圖」選一張照片（例如打叉的紙本班表），照片會顯示在月曆旁邊，照著它點日期修改就好。照片只在這次開啟時顯示，不會被存起來。</span></li>
@@ -1351,6 +1601,7 @@ function openHelp() {
         <tr><td><kbd>0</kbd></td><td>切換成清除筆刷</td></tr>
         <tr><td>右鍵點格子</td><td>清除該格</td></tr>
         <tr><td>雙擊格子</td><td>設定那天的上下班時間</td></tr>
+        <tr><td>點上方日期</td><td>看那天的人力時間軸</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>關閉視窗</td></tr>
       </table>
     </div>
