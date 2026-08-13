@@ -152,8 +152,14 @@ th.c-day .d{font-family:var(--mono);font-size:calc(12px*var(--zoom));font-varian
 th.c-day .w{font-size:calc(9px*var(--zoom));color:var(--muted);display:block;line-height:1.2}
 th.c-sum,td.c-sum{width:calc(38px*var(--zoom));border-left:1px solid var(--rule-strong);font-family:var(--mono);font-size:calc(12px*var(--zoom));font-variant-numeric:tabular-nums}
 td.c-sum{color:var(--ink-soft)}
-td.cell{height:calc(26px*var(--zoom));cursor:cell;user-select:none}
+td.cell{height:calc(26px*var(--zoom));cursor:cell;user-select:none;position:relative}
 td.cell:hover{box-shadow:0 0 0 2px var(--indigo) inset}
+/* 單日例外時間的角標 */
+td.cell.ovr::after{
+  content:'';position:absolute;top:0;right:0;width:0;height:0;
+  border:calc(4px*var(--zoom)) solid transparent;
+  border-top-color:rgba(21,26,33,.6);border-right-color:rgba(21,26,33,.6);
+}
 .sat{background:var(--sat)}
 .sun{background:var(--sun)}
 .today{box-shadow:inset 0 2px 0 #E8A33D}
@@ -163,7 +169,7 @@ td.cell:hover{box-shadow:0 0 0 2px var(--indigo) inset}
 }
 tfoot td{background:#F7F8FA;font-family:var(--mono);font-size:calc(11px*var(--zoom));font-variant-numeric:tabular-nums;color:var(--ink-soft);height:calc(22px*var(--zoom))}
 tfoot td.c-name{background:#F7F8FA;font-family:var(--ui);font-size:calc(11px*var(--zoom));color:var(--muted);font-weight:600}
-tfoot .fi{width:9px;height:9px;border-radius:2px;border:1px solid rgba(0,0,0,.15);display:inline-block;margin-right:4px;vertical-align:-1px}
+.fi{width:9px;height:9px;border-radius:2px;border:1px solid rgba(0,0,0,.15);display:inline-block;margin-right:4px;vertical-align:-1px}
 tfoot tr.total td{border-top:1px solid var(--rule-strong)}
 tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#FCFCFD}
 
@@ -227,6 +233,41 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
 .pay .note{margin:6px 0 0;font-size:11.5px;color:var(--muted)}
 .card-brush{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .card-brush .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+/* 月曆格裡的時間列：點它會開時間設定，不會塗到班別 */
+.cal .dy .tm{
+  display:block;margin-top:2px;font-family:var(--mono);font-size:9.5px;line-height:1.3;
+  color:var(--muted);border-radius:2px;padding:1px 0;
+}
+.cal .dy .tm:hover{background:#EDF0F7;color:var(--indigo)}
+.cal .dy .tm.ov{color:var(--indigo);font-weight:700}
+
+/* ---------- 時間設定小視窗（疊在個人卡之上） ---------- */
+.pop-back{position:fixed;inset:0;background:rgba(21,26,33,.3);display:grid;place-items:center;z-index:60;padding:16px}
+.pop{background:var(--panel);border:1px solid var(--rule-strong);border-radius:4px;width:min(390px,100%);padding:14px 16px 12px;box-shadow:0 8px 28px rgba(21,26,33,.18)}
+.pop h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.pop .who{margin:0 0 11px;font-size:12px;color:var(--muted)}
+.pop .tl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.pop .tl label{font-size:12px;color:var(--muted)}
+.pop input[type=time]{border:1px solid var(--rule);border-radius:3px;padding:5px 6px;font-family:var(--mono)}
+.pop input[type=number]{border:1px solid var(--rule);border-radius:3px;padding:5px 6px;width:62px;font-family:var(--mono)}
+.pop .calc{margin:0 0 12px;font-size:12.5px;color:var(--ink-soft)}
+.pop .calc b{font-family:var(--mono);font-size:15px}
+.pop .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pop .acts .btn{padding:5px 10px;font-size:12.5px}
+
+/* ---------- 班別設定的時間欄位 ---------- */
+.row.sh{flex-wrap:wrap}
+.row.sh .tg{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.row.sh .tg input[type=time]{border:1px solid var(--rule);border-radius:3px;padding:4px 6px;font-family:var(--mono);font-size:12px}
+.row.sh .tg input[type=number]{width:56px}
+.row.sh .hv{font-family:var(--mono);font-size:12px;color:var(--ink-soft);min-width:52px}
+.emp-times{margin-top:12px}
+.emp-times summary{font-size:12px;color:var(--ink-soft);cursor:pointer;font-weight:600}
+.emp-times .er{display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:1px dotted var(--rule);font-size:12px;flex-wrap:wrap}
+.emp-times .er .nm2{min-width:64px;color:var(--ink-soft)}
+.emp-times input[type=time]{border:1px solid var(--rule);border-radius:3px;padding:4px 6px;font-family:var(--mono);font-size:12px}
+.emp-times input[type=number]{border:1px solid var(--rule);border-radius:3px;padding:4px 6px;width:56px;font-family:var(--mono);font-size:12px}
+.emp-times .hint2{margin:7px 0 0;font-size:11.5px;color:var(--muted)}
 
 @media (max-width:640px){
   .sheet{padding:12px}
@@ -328,10 +369,10 @@ function seed() {
     savedAt: 0,
     employees: [],
     shifts: [
-      { id: uid(), code: '早', name: '早班', color: '#F6C445', hours: 8, count: true },
-      { id: uid(), code: '中', name: '中班', color: '#7FB2E5', hours: 8, count: true },
-      { id: uid(), code: '晚', name: '晚班', color: '#B7A5E0', hours: 8, count: true },
-      { id: uid(), code: '休', name: '休假', color: '#EDEEF1', hours: 0, count: false }
+      { id: uid(), code: '早', name: '早班', color: '#F6C445', start: '08:00', end: '16:00', brk: 0, hours: 8, count: true },
+      { id: uid(), code: '中', name: '中班', color: '#7FB2E5', start: '14:00', end: '22:00', brk: 0, hours: 8, count: true },
+      { id: uid(), code: '晚', name: '晚班', color: '#B7A5E0', start: '22:00', end: '06:00', brk: 0, hours: 8, count: true },
+      { id: uid(), code: '休', name: '休假', color: '#EDEEF1', start: '', end: '', brk: 0, hours: 0, count: false }
     ],
     schedule: {}
   };
@@ -362,20 +403,38 @@ async function load() {
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 function normBackup(d) {
   if (!d || typeof d !== 'object' || !Array.isArray(d.shifts) || !Array.isArray(d.employees)) return null;
-  const shifts = d.shifts.map(s => s && typeof s === 'object' && s.id != null ? {
-    id: String(s.id),
-    code: String(s.code ?? '班').slice(0, 2) || '班',
-    name: String(s.name ?? '班別'),
-    color: HEX.test(s.color) ? s.color : '#C9CBD1',
-    hours: Math.max(0, Math.min(24, +s.hours || 0)),
-    count: s.count !== false
-  } : null).filter(Boolean);
+  const brkOf = v => Math.max(0, Math.min(720, Math.round(+v || 0)));
+  const shifts = d.shifts.map(s => {
+    if (!s || typeof s !== 'object' || s.id == null) return null;
+    const start = normTime(s.start), end = normTime(s.end), brk = brkOf(s.brk);
+    return {
+      id: String(s.id),
+      code: String(s.code ?? '班').slice(0, 2) || '班',
+      name: String(s.name ?? '班別'),
+      color: HEX.test(s.color) ? s.color : '#C9CBD1',
+      start, end, brk,
+      // 有起訖就以時間為準重算，時數欄永遠是這個班別的實際時數
+      hours: (start && end) ? spanHours(start, end, brk) : Math.max(0, Math.min(24, +s.hours || 0)),
+      count: s.count !== false
+    };
+  }).filter(Boolean);
   if (!shifts.length) shifts.push(...seed().shifts);
+  const sids = new Set(shifts.map(s => s.id));
+  // 個人固定時間：只留起訖都填、且班別還存在的
+  const timesOf = t => {
+    const out = {};
+    if (t && typeof t === 'object') Object.entries(t).forEach(([sid, v]) => {
+      if (!sids.has(sid) || !v || typeof v !== 'object') return;
+      const start = normTime(v.start), end = normTime(v.end);
+      if (start && end) out[sid] = { start, end, brk: brkOf(v.brk) };
+    });
+    return out;
+  };
   const employees = d.employees.map(e => e && typeof e === 'object' && e.id != null && e.name != null ? {
     id: String(e.id), name: String(e.name), note: String(e.note ?? ''),
-    wage: e.wage === '' || e.wage == null ? null : Math.max(0, Math.min(10000, +e.wage || 0))
+    wage: e.wage === '' || e.wage == null ? null : Math.max(0, Math.min(10000, +e.wage || 0)),
+    times: timesOf(e.times)
   } : null).filter(Boolean);
-  const sids = new Set(shifts.map(s => s.id));
   const eids = new Set(employees.map(e => e.id));
   const schedule = {};
   if (d.schedule && typeof d.schedule === 'object') {
@@ -385,9 +444,14 @@ function normBackup(d) {
       Object.entries(mm).forEach(([eid, row]) => {
         if (!eids.has(eid) || !row || typeof row !== 'object') return;
         const rr = {};
-        Object.entries(row).forEach(([day, sid]) => {
+        Object.entries(row).forEach(([day, v]) => {
           const dn = +day;
-          if (dn >= 1 && dn <= 31 && sids.has(sid)) rr[dn] = sid;
+          if (dn < 1 || dn > 31) return;
+          if (typeof v === 'string') { if (sids.has(v)) rr[dn] = v; return; }
+          // 單日例外：起訖都成立才留物件，否則退回單純的班別 id
+          if (!v || typeof v !== 'object' || !sids.has(v.s)) return;
+          const st = normTime(v.st), en = normTime(v.en), br = brkOf(v.br);
+          rr[dn] = (st && en) ? { s: String(v.s), st, en, br } : String(v.s);
         });
         if (Object.keys(rr).length) em[eid] = rr;
       });
@@ -493,8 +557,68 @@ async function saveToFile() {
   }
 }
 
+/* ---------- 時間與時數 ----------
+   時間分三層解析，每層都是「起訖都填才算數」，只取最先成立的那層：
+     1. 單日例外  cell = {s, st, en, br}   ← 只有那一天
+     2. 個人固定  emp.times[shiftId]        ← 那個人每次排這個班
+     3. 班別預設  shift.start/end/brk       ← 全體通用
+   三層都沒時間就用 shift.hours（相容舊資料與只想填時數的人）。 */
+function toMin(t) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || ''));
+  if (!m) return null;
+  const h = +m[1], mi = +m[2];
+  return (h > 23 || mi > 59) ? null : h * 60 + mi;
+}
+const normTime = t => { const v = toMin(t); return v == null ? '' : String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0'); };
+/* 跨夜（22:00→06:00）自動加一天；扣掉不給薪的休息分鐘 */
+function spanHours(st, en, brk) {
+  const a = toMin(st), b = toMin(en);
+  if (a == null || b == null) return 0;
+  let d = b - a;
+  if (d <= 0) d += 1440;
+  d -= Math.max(0, +brk || 0);
+  return Math.max(0, Math.round(d / 60 * 100) / 100);
+}
+const fmtH = n => String(Math.round(n * 100) / 100);
+const hasT = o => !!(o && o.start && o.end);
+/* 格子可能是班別 id 字串，或帶單日時間的物件 */
+const cellId = v => (typeof v === 'string' ? v : (v && typeof v === 'object' ? v.s : null));
+
 /* ---------- helpers ---------- */
 const shiftOf = id => state.shifts.find(s => s.id === id);
+/* 解析一格：回傳班別、實際起訖、時數，以及時間是哪一層來的 */
+function cellInfo(v, empId) {
+  const id = cellId(v);
+  const shift = id ? shiftOf(id) : null;
+  if (!shift) return null;
+  const ov = (v && typeof v === 'object') ? v : null;
+  const pers = empId ? (empOf(empId)?.times || {})[id] : null;
+  let start = '', end = '', brk = 0, from = 'shift';
+  if (ov && ov.st && ov.en) { start = ov.st; end = ov.en; brk = +ov.br || 0; from = 'cell'; }
+  else if (hasT(pers)) { start = pers.start; end = pers.end; brk = +pers.brk || 0; from = 'emp'; }
+  else if (hasT(shift)) { start = shift.start; end = shift.end; brk = +shift.brk || 0; }
+  const hours = start ? spanHours(start, end, brk) : (+shift.hours || 0);
+  return { shift, id, start, end, brk, hours, from };
+}
+const timeTxt = i => i && i.start ? i.start + '–' + i.end : '';
+function cellTitle(i, empName) {
+  if (!i) return '雙擊可設定這天的時間';
+  const t = timeTxt(i);
+  return [empName, i.shift.name, t, fmtH(i.hours) + ' 小時',
+    i.from === 'cell' ? '（這天的例外時間）' : (i.from === 'emp' ? '（個人固定時間）' : '')]
+    .filter(Boolean).join(' · ');
+}
+/* 主表格子的樣式與內容，render() 與 setCell() 共用，避免兩邊長不一樣 */
+function cellParts(v, empId, empName) {
+  const i = cellInfo(v, empId);
+  return {
+    info: i,
+    bg: i ? i.shift.color : '',
+    ovr: !!(i && i.from === 'cell'),
+    title: cellTitle(i, empName),
+    inner: i ? `<span class="mark" style="color:${textOn(i.shift.color)}">${esc(i.shift.code)}</span>` : ''
+  };
+}
 /* create=true 才建立本月的空物件；純瀏覽不在 schedule 累積空月份 */
 function monthMap(create) {
   const k = mk(ym.y, ym.m);
@@ -536,8 +660,10 @@ function render() {
   $('#sheet-meta').textContent = `製表 ${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
   $('#unit').value = state.unit || '';
 
-  $('#legend').innerHTML = state.shifts.map(s =>
-    `<span><i style="background:${esc(s.color)}"></i>${esc(s.code)}　${esc(s.name)}${s.hours ? ' · ' + esc(s.hours) + ' 小時' : ''}</span>`).join('');
+  $('#legend').innerHTML = state.shifts.map(s => {
+    const t = hasT(s) ? ' · ' + esc(s.start + '–' + s.end) : '';
+    return `<span><i style="background:${esc(s.color)}"></i>${esc(s.code)}　${esc(s.name)}${t}${s.hours ? ' · ' + esc(fmtH(s.hours)) + ' 小時' : ''}</span>`;
+  }).join('');
 
   const scroll = $('#scroll');
   if (!state.employees.length) {
@@ -575,14 +701,13 @@ function render() {
     h += `<tr><td class="c-name" data-emp="${emp.id}" title="點姓名開個人班表卡"><div class="nm">${esc(emp.name)}</div>${emp.note ? `<div class="no">${esc(emp.note)}</div>` : ''}</td>`;
     for (let d = 1; d <= nd; d++) {
       const w = dow(y, m, d);
-      const s = row[d] ? shiftOf(row[d]) : null;
-      if (s && s.count !== false) { days++; hours += +s.hours || 0; perDay[d]++; }
-      const cls = ['cell', w === 6 ? 'sat' : '', w === 0 ? 'sun' : ''].join(' ');
-      const style = s ? ` style="background:${esc(s.color)}"` : '';
-      const inner = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
-      h += `<td class="${cls}" data-e="${emp.id}" data-d="${d}"${style}>${inner}</td>`;
+      const p = cellParts(row[d], emp.id, emp.name);
+      if (p.info && p.info.shift.count !== false) { days++; hours += p.info.hours; perDay[d]++; }
+      const cls = ['cell', w === 6 ? 'sat' : '', w === 0 ? 'sun' : '', p.ovr ? 'ovr' : ''].join(' ');
+      const style = p.bg ? ` style="background:${esc(p.bg)}"` : '';
+      h += `<td class="${cls}" data-e="${emp.id}" data-d="${d}" title="${esc(p.title)}"${style}>${p.inner}</td>`;
     }
-    h += `<td class="c-sum" data-sd="${emp.id}">${days || ''}</td>` + (useHours ? `<td class="c-sum" data-sh="${emp.id}">${hours || ''}</td>` : '') + '</tr>';
+    h += `<td class="c-sum" data-sd="${emp.id}">${days || ''}</td>` + (useHours ? `<td class="c-sum" data-sh="${emp.id}">${hours ? fmtH(hours) : ''}</td>` : '') + '</tr>';
   });
 
   h += '</tbody><tfoot><tr class="total"><td class="c-name">出勤人數</td>';
@@ -594,7 +719,7 @@ function render() {
     h += `<tr><td class="c-name"><i class="fi" style="background:${esc(s.color)}"></i>${esc(s.name)}</td>`;
     for (let d = 1; d <= nd; d++) {
       let n = 0;
-      state.employees.forEach(emp => { if ((map[emp.id] || {})[d] === s.id) n++; });
+      state.employees.forEach(emp => { if (cellId((map[emp.id] || {})[d]) === s.id) n++; });
       tot += n;
       h += `<td data-ps="${s.id}" data-d="${d}">${n || ''}</td>`;
     }
@@ -609,18 +734,24 @@ function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;'
 /* ---------- painting ---------- */
 /* 唯一的排班寫入點：主表與個人卡都呼叫這裡，兩邊看到的永遠是同一份資料。
    寫入後同步更新主表該格與統計，以及開啟中的個人卡。 */
-function setCell(empId, day, shiftId) {
+/* time 給 {st,en,br} 就是這天的例外時間；沒給就用班別／個人的預設時間 */
+function setCell(empId, day, shiftId, time) {
   const map = monthMap(true);
   if (!map[empId]) map[empId] = {};
-  if (shiftId) map[empId][day] = shiftId;
-  else delete map[empId][day];
+  if (shiftId) {
+    map[empId][day] = (time && time.st && time.en)
+      ? { s: shiftId, st: time.st, en: time.en, br: Math.max(0, +time.br || 0) }
+      : shiftId;
+  } else delete map[empId][day];
   if (!Object.keys(map[empId]).length) delete map[empId];
   save();
-  const s = shiftId ? shiftOf(shiftId) : null;
   const td = document.querySelector(`td.cell[data-e="${empId}"][data-d="${day}"]`);
   if (td) {
-    td.style.background = s ? s.color : '';
-    td.innerHTML = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
+    const p = cellParts(map[empId]?.[day], empId, empOf(empId)?.name);
+    td.style.background = p.bg;
+    td.classList.toggle('ovr', p.ovr);
+    td.title = p.title;
+    td.innerHTML = p.inner;
   }
   updateSums(empId, day);
   if (cardEmp === empId) renderCard();
@@ -634,29 +765,32 @@ function paint(td, clear) {
 function updateSums(e, d) {
   const map = monthMap();
   let days = 0, hours = 0;
-  Object.values(map[e] || {}).forEach(id => {
-    const s = shiftOf(id);
-    if (s && s.count !== false) { days++; hours += +s.hours || 0; }
+  Object.values(map[e] || {}).forEach(v => {
+    const i = cellInfo(v, e);
+    if (i && i.shift.count !== false) { days++; hours += i.hours; }
   });
   const sd = document.querySelector(`[data-sd="${e}"]`);
   if (sd) sd.textContent = days || '';
   const sh = document.querySelector(`[data-sh="${e}"]`);
-  if (sh) sh.textContent = hours || '';
+  if (sh) sh.textContent = hours ? fmtH(hours) : '';
   let n = 0;
   state.employees.forEach(emp => {
-    const s = map[emp.id]?.[d] ? shiftOf(map[emp.id][d]) : null;
-    if (s && s.count !== false) n++;
+    const i = cellInfo(map[emp.id]?.[d], emp.id);
+    if (i && i.shift.count !== false) n++;
   });
   const pc = document.querySelector(`[data-pc="${d}"]`);
   if (pc) pc.textContent = n || '';
   // 各班別統計：這一天每個班別的人數，以及各班別整月人次
   const cnt = {};
   state.employees.forEach(emp => {
-    const id = map[emp.id]?.[d];
+    const id = cellId(map[emp.id]?.[d]);
     if (id) cnt[id] = (cnt[id] || 0) + 1;
   });
   const tots = {};
-  Object.values(map).forEach(row => Object.values(row).forEach(id => { tots[id] = (tots[id] || 0) + 1; }));
+  Object.values(map).forEach(row => Object.values(row).forEach(v => {
+    const id = cellId(v);
+    if (id) tots[id] = (tots[id] || 0) + 1;
+  }));
   state.shifts.forEach(s => {
     const c = document.querySelector(`[data-ps="${s.id}"][data-d="${d}"]`);
     if (c) c.textContent = cnt[s.id] || '';
@@ -685,9 +819,18 @@ document.addEventListener('contextmenu', ev => {
   if (!td) return;
   ev.preventDefault(); paint(td, true);
 });
+// 雙擊格子 → 設定這天的上下班時間
+document.addEventListener('dblclick', ev => {
+  const td = ev.target.closest('td.cell');
+  if (!td || !td.dataset.e) return;
+  ev.preventDefault();
+  painting = false;
+  openTimePop(td.dataset.e, +td.dataset.d);
+});
 document.addEventListener('keydown', ev => {
-  if (ev.key === 'Escape') { closeModal(); return; }
+  if (ev.key === 'Escape') { if (!closePop()) closeModal(); return; }
   if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (document.querySelector('.pop-back')) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
   // 優先用 ev.code 判斷實體按鍵：中文輸入法（注音/倉頡）開啟時 ev.key 會是
   // 'Process' 而不是數字，只看 ev.key 快捷鍵會完全沒反應；ev.code 不受影響，
@@ -702,7 +845,7 @@ document.addEventListener('keydown', ev => {
 });
 
 /* ---------- modals ---------- */
-function closeModal() { const o = document.querySelector('.overlay'); if (o) o.remove(); cardEmp = cardRef = null; }
+function closeModal() { closePop(); const o = document.querySelector('.overlay'); if (o) o.remove(); cardEmp = cardRef = null; }
 function modal(title, bodyHTML, footerHTML) {
   closeModal();
   const o = document.createElement('div');
@@ -713,6 +856,83 @@ function modal(title, bodyHTML, footerHTML) {
   o.addEventListener('click', ev => { if (ev.target === o || ev.target.dataset.close !== undefined) closeModal(); });
   document.body.appendChild(o);
   return o;
+}
+
+/* ---------- 時間設定小視窗 ----------
+   從主表雙擊格子、或個人卡點時間列打開。疊在個人卡之上，關掉不影響卡片。 */
+function closePop() { const p = document.querySelector('.pop-back'); if (p) { p.remove(); return true; } return false; }
+function openTimePop(empId, day) {
+  closePop();
+  const emp = empOf(empId);
+  if (!emp) return;
+  const v = (monthMap()[empId] || {})[day];
+  const info = cellInfo(v, empId);
+  const w = dow(ym.y, ym.m, day);
+  const when = `${ym.m + 1}/${day}（${WD[w]}）`;
+  const back = document.createElement('div');
+  back.className = 'pop-back no-print';
+
+  if (!info) {
+    back.innerHTML = `<div class="pop"><h3>${esc(emp.name)}　${when}</h3>
+      <p class="who">這天還沒排班。先用筆刷把班別排上去，再設定時間。</p>
+      <div class="acts"><span style="flex:1"></span><button class="btn" data-x>知道了</button></div></div>`;
+  } else {
+    const dflt = hasT(info.shift) ? `班別預設 ${info.shift.start}–${info.shift.end}` : `班別預設 ${fmtH(info.shift.hours)} 小時`;
+    const pers = (emp.times || {})[info.id];
+    const from = info.from === 'cell' ? '目前是這天的例外時間' : (info.from === 'emp' ? '目前跟著個人固定時間' : '目前跟著班別預設');
+    back.innerHTML = `<div class="pop">
+      <h3>${esc(emp.name)}　${when}　${esc(info.shift.name)}</h3>
+      <p class="who">${from}　·　${esc(dflt)}${pers ? `　·　個人固定 ${esc(pers.start + '–' + pers.end)}` : ''}</p>
+      <div class="tl">
+        <label>上班</label><input type="time" id="p-st" value="${esc(info.start)}">
+        <label>下班</label><input type="time" id="p-en" value="${esc(info.end)}">
+        <label>休息</label><input type="number" id="p-br" min="0" max="720" step="5" value="${info.brk}"><label>分</label>
+      </div>
+      <p class="calc">這天時數 <b id="p-h">${fmtH(info.hours)}</b> 小時<span id="p-warn" style="color:#B4232A"></span></p>
+      <div class="acts">
+        <button class="btn btn-solid" id="p-day">只改這天</button>
+        <button class="btn" id="p-emp">設為個人固定</button>
+        <button class="btn btn-quiet" id="p-clr">回到預設</button>
+        <span style="flex:1"></span><button class="btn" data-x>取消</button>
+      </div></div>`;
+  }
+  back.addEventListener('click', ev => { if (ev.target === back || ev.target.dataset.x !== undefined) closePop(); });
+  document.body.appendChild(back);
+  if (!info) return;
+
+  const st = back.querySelector('#p-st'), en = back.querySelector('#p-en'), br = back.querySelector('#p-br');
+  const vals = () => ({ st: normTime(st.value), en: normTime(en.value), br: Math.max(0, Math.min(720, +br.value || 0)) });
+  const sync = () => {
+    const v2 = vals();
+    const ok = v2.st && v2.en;
+    back.querySelector('#p-h').textContent = ok ? fmtH(spanHours(v2.st, v2.en, v2.br)) : fmtH(info.shift.hours);
+    back.querySelector('#p-warn').textContent = ok ? '' : '　（上下班時間都要填）';
+    back.querySelector('#p-day').disabled = !ok;
+    back.querySelector('#p-emp').disabled = !ok;
+  };
+  [st, en, br].forEach(el => el.addEventListener('input', sync));
+  sync();
+
+  back.querySelector('#p-day').onclick = () => {
+    setCell(empId, day, info.id, vals());
+    closePop(); toast('已改這天的時間');
+  };
+  back.querySelector('#p-emp').onclick = () => {
+    const v2 = vals();
+    if (!emp.times) emp.times = {};
+    emp.times[info.id] = { start: v2.st, end: v2.en, brk: v2.br };
+    // 這個人這個班別的單日例外全部清掉，統一跟著個人固定時間
+    Object.values(state.schedule).forEach(mm => {
+      const row = mm[empId]; if (!row) return;
+      Object.keys(row).forEach(k => { if (row[k] && typeof row[k] === 'object' && row[k].s === info.id) row[k] = info.id; });
+    });
+    save(); render(); if (cardEmp) renderCard();
+    closePop(); toast(`${emp.name} 的${info.shift.name}固定為 ${v2.st}–${v2.en}`);
+  };
+  back.querySelector('#p-clr').onclick = () => {
+    setCell(empId, day, info.id);
+    closePop(); toast('已回到預設時間');
+  };
 }
 
 /* ---------- 個人班表卡 ---------- */
@@ -727,12 +947,12 @@ function cardStats(empId) {
   let days = 0, hours = 0;
   const per = {};
   for (let d = 1; d <= nd; d++) {
-    const s = row[d] ? shiftOf(row[d]) : null;
-    if (!s) continue;
-    per[s.id] = (per[s.id] || 0) + 1;
-    if (s.count !== false) { days++; hours += +s.hours || 0; }
+    const i = cellInfo(row[d], empId);
+    if (!i) continue;
+    per[i.id] = (per[i.id] || 0) + 1;
+    if (i.shift.count !== false) { days++; hours += i.hours; }
   }
-  return { days, hours, per, row, nd };
+  return { days, hours: Math.round(hours * 100) / 100, per, row, nd };
 }
 
 function openCard(empId) {
@@ -775,11 +995,14 @@ function renderCard() {
   const lead = dow(ym.y, ym.m, 1);
   for (let i = 0; i < lead; i++) cal += '<div class="dy pad"></div>';
   for (let d = 1; d <= nd; d++) {
-    const s = row[d] ? shiftOf(row[d]) : null;
+    const i = cellInfo(row[d], cardEmp);
     const w = dow(ym.y, ym.m, d);
+    const tm = i
+      ? `<span class="tm${i.from === 'cell' ? ' ov' : ''}" data-tm title="點這裡設定這天的上下班時間">${i.start ? esc(i.start + '–' + i.end) : fmtH(i.hours) + ' 小時'}</span>`
+      : '<span class="tm">&nbsp;</span>';
     cal += `<button class="dy${w === 0 || w === 6 ? ' wk' : ''}" data-cd="${d}"><span class="n">${d}</span>` +
-      (s ? `<span class="cd" style="background:${esc(s.color)};color:${textOn(s.color)}">${esc(s.code)}</span>` : '<span class="cd">&nbsp;</span>') +
-      '</button>';
+      (i ? `<span class="cd" style="background:${esc(i.shift.color)};color:${textOn(i.shift.color)}">${esc(i.shift.code)}</span>` : '<span class="cd">&nbsp;</span>') +
+      tm + '</button>';
   }
   cal += '</div>';
 
@@ -795,15 +1018,16 @@ function renderCard() {
       <div class="card-cal">
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${ym.y} 年 ${ym.m + 1} 月${emp.note ? '　' + esc(emp.note) : ''}</div>
         ${brushes}${cal}
-        <div class="stats"><span>出勤 <b>${days}</b> 天</span><span>總時數 <b>${hours}</b> 小時</span></div>
+        <div class="stats"><span>出勤 <b>${days}</b> 天</span><span>總時數 <b>${fmtH(hours)}</b> 小時</span></div>
         <div class="legend" style="margin-top:8px">${perTxt}</div>
         <div class="pay">
           <div class="ln"><label style="font-size:12px;color:var(--muted)">時薪</label>
             <input type="number" id="card-wage" min="0" max="10000" step="1" value="${emp.wage != null && emp.wage !== '' ? emp.wage : ''}" placeholder="${+state.baseWage || 0}">
-            <span style="font-size:12px;color:var(--muted)">× ${hours} 小時</span>
+            <span style="font-size:12px;color:var(--muted)">× ${fmtH(hours)} 小時</span>
             <span class="amt">${money(hours * wage)}</span></div>
           <p class="note">時薪留空就套用基本時薪 ${money(+state.baseWage || 0)}／小時（在「員工」視窗設定）。${emp.wage != null && emp.wage !== '' ? '目前使用個人時薪。' : ''}</p>
         </div>
+        ${empTimesHTML(emp)}
       </div>
       ${cardRef ? `<div class="card-ref"><img src="${cardRef}" alt="對照圖">
         <p class="hint">對照這張圖，在左邊月曆點日期修改班別（例如沒出席的改成休假）。圖片只在這次開啟時顯示，不會被儲存。</p></div>` : ''}
@@ -814,10 +1038,12 @@ function renderCard() {
     brush = brush === v ? null : v;
     renderPalette(); renderCard();
   });
-  box.querySelectorAll('[data-cd]').forEach(b => b.onclick = () => {
+  box.querySelectorAll('[data-cd]').forEach(b => b.onclick = ev => {
     const d = +b.dataset.cd;
+    // 點日期下方的時間列 → 改時間，不塗班別
+    if (ev.target.closest('[data-tm]')) { openTimePop(cardEmp, d); return; }
     if (!brush) { toast('先選一個班別當筆刷'); return; }
-    const cur = (monthMap()[cardEmp] || {})[d];
+    const cur = cellId((monthMap()[cardEmp] || {})[d]);
     // 點到已是同一個班別 → 清除，方便快速槓掉
     setCell(cardEmp, d, (brush === 'erase' || cur === brush) ? null : brush);
   });
@@ -827,6 +1053,41 @@ function renderCard() {
     save();
     box.querySelector('.amt').textContent = money(hours * wageOf(emp));
   };
+  bindEmpTimes(box, emp);
+}
+
+/* 個人固定時間：這個人排某個班別時，預設用自己的上下班時間 */
+function empTimesHTML(emp) {
+  const t = emp.times || {};
+  const rows = state.shifts.map(s => {
+    const p = t[s.id] || {};
+    const dflt = hasT(s) ? `${s.start}–${s.end}` : `${fmtH(s.hours)} 小時`;
+    return `<div class="er" data-sid="${s.id}">
+      <span class="nm2"><i class="fi" style="background:${esc(s.color)}"></i>${esc(s.name)}</span>
+      <input type="time" data-t="start" value="${esc(p.start || '')}">
+      <input type="time" data-t="end" value="${esc(p.end || '')}">
+      <input type="number" data-t="brk" min="0" max="720" step="5" value="${p.brk || 0}" title="休息分鐘"><span style="color:var(--muted)">分休息</span>
+      <span style="margin-left:auto;color:var(--muted)">${hasT(p) ? fmtH(spanHours(p.start, p.end, p.brk)) + ' 小時' : '預設 ' + esc(dflt)}</span>
+    </div>`;
+  }).join('');
+  return `<details class="emp-times"${Object.keys(t).length ? ' open' : ''}>
+    <summary>個人固定時間（${Object.keys(t).length ? '已設定 ' + Object.keys(t).length + ' 個班別' : '未設定，跟著班別預設'}）</summary>
+    ${rows}
+    <p class="hint2">填了就是這個人排該班別時的固定上下班時間，每個月都適用。留空代表跟著「班別」設定走。單一天要不一樣，點月曆格子裡的時間。</p>
+  </details>`;
+}
+function bindEmpTimes(box, emp) {
+  box.querySelectorAll('.emp-times .er').forEach(r => {
+    const sid = r.dataset.sid;
+    r.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => {
+      const g = k => r.querySelector(`[data-t="${k}"]`).value;
+      const start = normTime(g('start')), end = normTime(g('end'));
+      if (!emp.times) emp.times = {};
+      if (start && end) emp.times[sid] = { start, end, brk: Math.max(0, Math.min(720, +g('brk') || 0)) };
+      else delete emp.times[sid];
+      save(); render(); renderCard();
+    }));
+  });
 }
 
 /* 手繪 canvas 產生 JPG，維持單檔零依賴 */
@@ -877,11 +1138,18 @@ function downloadCardJPG(emp, withPay) {
     x.textAlign = 'left'; x.font = font(11);
     x.fillStyle = (w === 0 || w === 6) ? '#B4232A' : '#6C7480';
     x.fillText(String(d), cx + 6, cy + 16);
-    const s = row[d] ? shiftOf(row[d]) : null;
-    if (s) {
-      x.fillStyle = s.color; x.fillRect(cx + 6, cy + 22, CW - 16, 30);
-      x.fillStyle = textOn(s.color); x.font = font(15, 700); x.textAlign = 'center';
-      x.fillText(s.code, cx + 6 + (CW - 16) / 2, cy + 43);
+    const i = cellInfo(row[d], emp.id);
+    if (i) {
+      const bw = CW - 16, mid = cx + 6 + bw / 2;
+      x.fillStyle = i.shift.color; x.fillRect(cx + 6, cy + 20, bw, 26);
+      x.fillStyle = textOn(i.shift.color); x.font = font(14, 700); x.textAlign = 'center';
+      x.fillText(i.shift.code, mid, cy + 38);
+      // 實際上下班時間，員工最需要看的就是這行
+      const t = i.start ? i.start + '–' + i.end : (i.hours ? fmtH(i.hours) + ' 小時' : '');
+      if (t) {
+        x.fillStyle = '#3C4450'; x.font = font(9.5);
+        x.fillText(t, mid, cy + 60);
+      }
       x.textAlign = 'left';
     }
   }
@@ -891,12 +1159,12 @@ function downloadCardJPG(emp, withPay) {
   x.beginPath(); x.moveTo(PAD, statsTop); x.lineTo(W - PAD, statsTop); x.stroke();
   x.fillStyle = '#151A21'; x.font = font(15, 600);
   x.fillText(`出勤 ${days} 天`, PAD, statsTop + 26);
-  x.fillText(`總時數 ${hours} 小時`, PAD + 140, statsTop + 26);
+  x.fillText(`總時數 ${fmtH(hours)} 小時`, PAD + 140, statsTop + 26);
   if (withPay) {
     x.fillStyle = '#F7F8FA'; x.fillRect(PAD, statsTop + 40, W - PAD * 2, 44);
     x.strokeStyle = '#E3E5E9'; x.strokeRect(PAD + .5, statsTop + 40.5, W - PAD * 2 - 1, 43);
     x.fillStyle = '#6C7480'; x.font = font(13);
-    x.fillText(`時薪 ${money(wage)} × ${hours} 小時`, PAD + 12, statsTop + 68);
+    x.fillText(`時薪 ${money(wage)} × ${fmtH(hours)} 小時`, PAD + 12, statsTop + 68);
     x.fillStyle = '#26418F'; x.font = font(20, 700); x.textAlign = 'right';
     x.fillText(money(hours * wage), W - PAD - 12, statsTop + 70);
     x.textAlign = 'left';
@@ -958,40 +1226,58 @@ function openStaff() {
   o.querySelector('#bulk-add').onclick = () => {
     const names = o.querySelector('#bulk').value.split('\n').map(s => s.trim()).filter(Boolean);
     if (!names.length) return;
-    names.forEach(n => state.employees.push({ id: uid(), name: n, note: '' }));
+    names.forEach(n => state.employees.push({ id: uid(), name: n, note: '', wage: null, times: {} }));
     save(); render(); openStaff();
   };
 }
 
 function openShifts() {
-  const rows = state.shifts.map((s, i) => `<div class="row" data-i="${i}">
+  const rows = state.shifts.map((s, i) => `<div class="row sh" data-i="${i}">
       <input type="color" value="${esc(s.color)}" data-f="color">
       <input type="text" class="code" maxlength="2" value="${esc(s.code)}" data-f="code" title="格子裡顯示的字">
       <input type="text" class="grow" value="${esc(s.name)}" placeholder="班別名稱" data-f="name">
-      <input type="number" min="0" max="24" step="0.5" value="${+s.hours || 0}" data-f="hours" title="時數">
       <label><input type="checkbox" ${s.count !== false ? 'checked' : ''} data-f="count">計入出勤</label>
       <button class="mini danger" data-del title="刪除">✕</button>
+      <span class="tg">上班<input type="time" data-f="start" value="${esc(s.start || '')}">
+        下班<input type="time" data-f="end" value="${esc(s.end || '')}">
+        休息<input type="number" min="0" max="720" step="5" value="${s.brk || 0}" data-f="brk">分
+        <span class="hv" data-hv>= ${fmtH(s.hours)} 小時</span>
+        <input type="number" min="0" max="24" step="0.5" value="${+s.hours || 0}" data-f="hours" title="直接填時數（沒填上下班時間時使用）"${hasT(s) ? ' style="display:none"' : ''}>
+      </span>
     </div>`).join('');
 
-  const o = modal('班別', rows + `<div class="field"><p>「計入出勤」沒勾的班別（例如休假）不會算進天數、時數與底部的每日出勤人數。</p></div>`,
+  const o = modal('班別', rows + `<div class="field"><p>填了上下班時間，時數會自動算出來（跨夜班會自動加一天，休息分鐘不計薪）。時間留空就直接填時數。「計入出勤」沒勾的班別（例如休假）不會算進天數、時數與底部的每日出勤人數。</p>
+      <p>每個人的上下班時間不一樣時：在個人班表卡設「個人固定時間」；只有某一天不同，就在主表雙擊那一格。</p></div>`,
     `<button class="btn" id="add-shift">新增班別</button><span style="flex:1"></span>
      <button class="btn btn-solid" data-close>完成</button>`);
 
-  o.querySelectorAll('.row').forEach(r => {
+  o.querySelectorAll('.row.sh').forEach(r => {
     const i = +r.dataset.i;
     r.querySelectorAll('input').forEach(inp => {
-      const ev = inp.type === 'color' ? 'input' : (inp.type === 'checkbox' ? 'change' : 'input');
-      inp.addEventListener(ev, () => {
-        const f = inp.dataset.f;
-        state.shifts[i][f] = f === 'count' ? inp.checked : (f === 'hours' ? Math.max(0, Math.min(24, +inp.value || 0)) : inp.value);
-        save(); render(); renderPalette();
+      // 文字類要即時反應，時間／數字／勾選等 change 時再處理，避免打到一半就重算
+      const evName = (inp.type === 'text' || inp.type === 'color') ? 'input' : 'change';
+      inp.addEventListener(evName, () => {
+        const s = state.shifts[i], f = inp.dataset.f;
+        if (f === 'count') s.count = inp.checked;
+        else if (f === 'start' || f === 'end') s[f] = normTime(inp.value);
+        else if (f === 'brk') s.brk = Math.max(0, Math.min(720, Math.round(+inp.value || 0)));
+        else if (f === 'hours') s.hours = Math.max(0, Math.min(24, +inp.value || 0));
+        else s[f] = inp.value;
+        // 起訖都在就以時間為準；否則保留手填的時數
+        if (hasT(s)) s.hours = spanHours(s.start, s.end, s.brk);
+        const hv = r.querySelector('[data-hv]');
+        if (hv) hv.textContent = '= ' + fmtH(s.hours) + ' 小時';
+        const hi = r.querySelector('[data-f="hours"]');
+        if (hi) { hi.style.display = hasT(s) ? 'none' : ''; if (hasT(s)) hi.value = fmtH(s.hours); }
+        save(); render(); renderPalette(); if (cardEmp) renderCard();
       });
     });
     r.querySelector('[data-del]').onclick = () => {
       const s = state.shifts[i];
       if (!confirm(`刪除班別「${s.name}」？已排入的格子會被清空。`)) return;
       Object.values(state.schedule).forEach(mm => Object.values(mm).forEach(row =>
-        Object.keys(row).forEach(d => { if (row[d] === s.id) delete row[d]; })));
+        Object.keys(row).forEach(d => { if (cellId(row[d]) === s.id) delete row[d]; })));
+      state.employees.forEach(e => { if (e.times) delete e.times[s.id]; });
       if (brush === s.id) brush = null;
       state.shifts.splice(i, 1);
       if (!state.shifts.length) {
@@ -1002,7 +1288,7 @@ function openShifts() {
     };
   });
   o.querySelector('#add-shift').onclick = () => {
-    state.shifts.push({ id: uid(), code: '新', name: '新班別', color: PRESET[state.shifts.length % PRESET.length], hours: 8, count: true });
+    state.shifts.push({ id: uid(), code: '新', name: '新班別', color: PRESET[state.shifts.length % PRESET.length], start: '', end: '', brk: 0, hours: 8, count: true });
     save(); render(); renderPalette(); openShifts();
   };
 }
@@ -1036,7 +1322,8 @@ $('#copy-prev').onclick = () => {
   const nd = daysIn(ym.y, ym.m), dst = {};
   Object.entries(src).forEach(([e, row]) => {
     dst[e] = {};
-    Object.entries(row).forEach(([d, s]) => { if (+d <= nd) dst[e][d] = s; });
+    // 帶時間的格子要複製一份，否則兩個月會共用同一個物件，改一邊另一邊跟著變
+    Object.entries(row).forEach(([d, s]) => { if (+d <= nd) dst[e][d] = (s && typeof s === 'object') ? { ...s } : s; });
   });
   state.schedule[mk(ym.y, ym.m)] = dst;
   save(); render(); toast('已套用上月班表，記得檢查月底日期');
@@ -1047,11 +1334,12 @@ function openHelp() {
   const o = modal('使用說明', `
     <ol class="guide">
       <li><b>加入員工</b><span>按上方「員工」，在最下面的欄位一行一個姓名貼上，按「加入名單」。姓名旁可填職務或備註，會印在名字下方。用 ↑ ↓ 調整表上的排列順序。</span></li>
-      <li><b>設定班別</b><span>按上方「班別」。左邊色塊決定格子顏色，接著是格子裡顯示的字（1–2 字）、班別全名、時數。休假、例假這類不算上班的，把「計入出勤」取消勾選，就不會被算進統計。</span></li>
+      <li><b>設定班別</b><span>按上方「班別」。左邊色塊決定格子顏色，接著是格子裡顯示的字（1–2 字）、班別全名。填上下班時間，時數會自動算出來——跨夜班（例如 22:00–06:00）會自動加一天，「休息」填的分鐘數不計薪，例如 09:00–18:00 休息 60 分就是 8 小時。不想用時間的話把時間留空，直接填時數也可以。休假、例假這類不算上班的，把「計入出勤」取消勾選。</span></li>
+      <li><b>每個人時間不一樣</b><span>三層設定，只會採用最先成立的那一層：<b>單日例外</b>（在主表雙擊那一格，或在個人卡點日期下方的時間）只影響那一天，格子右上角會出現小角標；<b>個人固定時間</b>（個人卡下方「個人固定時間」）是那個人排該班別時每次都用的時間，每個月都適用；都沒設就用<b>班別預設</b>。在時間視窗按「設為個人固定」可以直接把這次填的時間變成那個人的固定時間。注意：用筆刷重新塗過的格子會回到預設時間。</span></li>
       <li><b>排班</b><span>在筆刷列選一個班別，在格子上點一下就填入。按住滑鼠左鍵拖曳可以一次填一整排，適合連上五天。填錯就按右鍵清除，或選「清除」筆刷再塗。</span></li>
       <li><b>看統計</b><span>右邊兩欄是每個人的出勤天數與時數，下面是每天的出勤人數，再往下每個班別各一列，看得到每天各班有幾個人、整月各班總人次。全部自動計算。</span></li>
       <li><b>個人班表卡與算錢</b><span>點表格左邊的姓名，會開啟那個人的月曆卡片。卡片裡可以直接排班（上面有同一組筆刷），跟主表是同一份資料，改哪邊另一邊都會跟著變。月底核對打卡時，沒出席的日子就在卡片裡改成休假，時數與金額立刻重算。時薪留空會套用「員工」視窗裡設定的基本時薪，個別員工也可以在卡片裡單獨填。</span></li>
-      <li><b>發給員工</b><span>在個人卡按「下載 JPG」，會存成一張班表圖片可以傳給本人。預設不含薪資，要對帳時勾「圖片含薪資」再下載。</span></li>
+      <li><b>發給員工</b><span>在個人卡按「下載 JPG」，會存成一張班表圖片可以傳給本人，每天的上下班時間都會印在上面。預設不含薪資，要對帳時勾「圖片含薪資」再下載。</span></li>
       <li><b>對照紙本核銷</b><span>在個人卡按「匯入對照圖」選一張照片（例如打叉的紙本班表），照片會顯示在月曆旁邊，照著它點日期修改就好。照片只在這次開啟時顯示，不會被存起來。</span></li>
       <li><b>下個月</b><span>用左上角 ‹ › 換月份。按「套用上月」可以把上個月整份複製過來再修改，比從空白排快得多。</span></li>
       <li><b>列印</b><span>按「列印班表」，版面已設定成 A4 橫式一頁。在列印對話框把「背景圖形」打開，班別顏色才會印出來。</span></li>
@@ -1062,6 +1350,7 @@ function openHelp() {
         <tr><td><kbd>1</kbd>–<kbd>9</kbd></td><td>切換到第 1–9 個班別筆刷</td></tr>
         <tr><td><kbd>0</kbd></td><td>切換成清除筆刷</td></tr>
         <tr><td>右鍵點格子</td><td>清除該格</td></tr>
+        <tr><td>雙擊格子</td><td>設定那天的上下班時間</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>關閉視窗</td></tr>
       </table>
     </div>
