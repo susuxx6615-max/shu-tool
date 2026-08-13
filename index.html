@@ -143,6 +143,8 @@ th.c-name,td.c-name{
   border-right:1px solid var(--rule-strong);
 }
 thead th.c-name{background:#F7F8FA;z-index:7}
+tbody td.c-name{cursor:pointer}
+tbody td.c-name:hover .nm{color:var(--indigo);text-decoration:underline}
 td.c-name .nm{font-size:calc(13px*var(--zoom));line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 td.c-name .no{font-size:calc(10px*var(--zoom));color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 th.c-day{width:calc(30px*var(--zoom))}
@@ -195,6 +197,37 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
   background:var(--ink);color:#fff;padding:8px 16px;border-radius:4px;font-size:13px;z-index:80;
 }
 
+/* ---------- personal card ---------- */
+.modal.wide{width:min(940px,100%)}
+.card-cols{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.card-cal{flex:1 1 340px;min-width:300px}
+.card-ref{flex:1 1 280px;min-width:240px}
+.card-ref img{width:100%;border:1px solid var(--rule);border-radius:3px;display:block}
+.card-ref .hint{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .hd{text-align:center;font-size:11px;color:var(--muted);padding:2px 0;font-weight:600}
+.cal .dy{
+  border:1px solid var(--rule);border-radius:3px;background:var(--panel);
+  min-height:46px;padding:3px 4px;text-align:left;position:relative;
+}
+.cal .dy.pad{border-color:transparent;background:transparent;cursor:default}
+.cal .dy .n{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cal .dy .cd{
+  display:block;margin-top:3px;border-radius:3px;font-size:12px;font-weight:700;
+  text-align:center;line-height:20px;font-family:var(--mono);
+}
+.cal .dy:not(.pad):hover{border-color:var(--indigo);box-shadow:0 0 0 1px var(--indigo)}
+.cal .dy.wk .n{color:#B4232A}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 0;font-size:12.5px}
+.stats b{font-family:var(--mono);font-size:15px;font-weight:700}
+.pay{margin-top:12px;padding:11px 12px;background:#F7F8FA;border:1px solid var(--rule);border-radius:4px}
+.pay .ln{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pay input{border:1px solid var(--rule);border-radius:3px;padding:5px 7px;width:92px;font-family:var(--mono)}
+.pay .amt{margin-left:auto;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--indigo);font-variant-numeric:tabular-nums}
+.pay .note{margin:6px 0 0;font-size:11.5px;color:var(--muted)}
+.card-brush{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.card-brush .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+
 @media (max-width:640px){
   .sheet{padding:12px}
   .sheet-wrap{padding:0 8px}
@@ -227,6 +260,7 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
   .mark{font-size:7.5pt;line-height:5.2mm}
   tfoot td{height:5mm;font-size:7pt}
   tbody tr:nth-child(even) td.cell:not(.sat):not(.sun){background:#fff}
+  tbody td.c-name{cursor:default}
   td.cell:hover{box-shadow:none}
   .today{box-shadow:none}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -251,6 +285,7 @@ textarea{width:100%;border:1px solid var(--rule);border-radius:3px;padding:8px;m
       <option value="1.25">字級：大</option>
       <option value="1.5">字級：特大</option>
     </select>
+    <button class="btn" id="save-file" title="把資料存回這個 HTML 檔">儲存檔案</button>
     <button class="btn btn-solid" id="print">列印班表</button>
     <button class="icon-btn help-btn" id="help" title="使用說明">？</button>
   </div>
@@ -289,6 +324,8 @@ function seed() {
   return {
     unit: '',
     zoom: 1,
+    baseWage: 0,
+    savedAt: 0,
     employees: [],
     shifts: [
       { id: uid(), code: '早', name: '早班', color: '#F6C445', hours: 8, count: true },
@@ -335,7 +372,8 @@ function normBackup(d) {
   } : null).filter(Boolean);
   if (!shifts.length) shifts.push(...seed().shifts);
   const employees = d.employees.map(e => e && typeof e === 'object' && e.id != null && e.name != null ? {
-    id: String(e.id), name: String(e.name), note: String(e.note ?? '')
+    id: String(e.id), name: String(e.name), note: String(e.note ?? ''),
+    wage: e.wage === '' || e.wage == null ? null : Math.max(0, Math.min(10000, +e.wage || 0))
   } : null).filter(Boolean);
   const sids = new Set(shifts.map(s => s.id));
   const eids = new Set(employees.map(e => e.id));
@@ -359,6 +397,8 @@ function normBackup(d) {
   return {
     unit: String(d.unit ?? ''),
     zoom: ZOOMS.includes(+d.zoom) ? +d.zoom : 1,
+    baseWage: Math.max(0, Math.min(10000, +d.baseWage || 0)),
+    savedAt: Math.max(0, +d.savedAt || 0),
     employees, shifts, schedule
   };
 }
@@ -372,6 +412,7 @@ async function flushSave() {
   clearTimeout(saveTimer);
   if (!dirty) return;
   dirty = false;
+  state.savedAt = Date.now();
   try { await store.set(KEY, JSON.stringify(state)); }
   catch (e) { dirty = true; toast('存不起來，這次的修改只留在畫面上'); }
 }
@@ -383,6 +424,73 @@ function toast(msg) {
   t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2600);
+}
+
+/* ---------- 單檔模式：把資料寫回 HTML ----------
+   把目前的 state 內嵌成 <script id="roster-data">，產生一份完整的 HTML。
+   支援 File System Access API 的瀏覽器（Chrome/Edge）可直接覆寫原檔，
+   其他瀏覽器則下載新檔。                                        */
+const DATA_ID = 'roster-data';
+let fileHandle = null;
+function embeddedData() {
+  const el = document.getElementById(DATA_ID);
+  if (!el) return null;
+  try { return JSON.parse(el.textContent); } catch (e) { return null; }
+}
+function buildHTML() {
+  const doc = document.documentElement.cloneNode(true);
+  // 清掉執行時才產生的內容，讓檔案回到「乾淨模板 + 資料」的狀態
+  doc.querySelectorAll('.overlay,.toast').forEach(n => n.remove());
+  const sc = doc.querySelector('#scroll'); if (sc) sc.innerHTML = '';
+  const pl = doc.querySelector('#palette'); if (pl) pl.innerHTML = '';
+  const lg = doc.querySelector('#legend'); if (lg) lg.innerHTML = '';
+  doc.removeAttribute('data-zoom');
+  const u = doc.querySelector('#unit'); if (u) u.removeAttribute('value');
+  let tag = doc.querySelector('#' + DATA_ID);
+  if (!tag) {
+    tag = document.createElement('script');
+    tag.type = 'application/json'; tag.id = DATA_ID;
+    // 必須排在主程式 script 之前，否則開機讀取時還沒被解析到
+    const head = doc.querySelector('head');
+    if (head) head.appendChild(tag);
+    else doc.insertBefore(tag, doc.firstChild);
+  }
+  // 轉義 < 避免 JSON 內容意外結束 script 標籤
+  tag.textContent = JSON.stringify({ ...state, savedAt: Date.now() }).replace(/</g, '\\u003c');
+  return '<!doctype html>\n<html>' + doc.innerHTML + '</html>';
+}
+function htmlName() {
+  const n = new Date();
+  const st = state.unit ? state.unit + '-' : '';
+  return `排班表-${st}${n.getFullYear()}${String(n.getMonth() + 1).padStart(2, '0')}${String(n.getDate()).padStart(2, '0')}.html`;
+}
+function downloadHTML() {
+  const blob = new Blob([buildHTML()], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = htmlName();
+  a.click(); URL.revokeObjectURL(a.href);
+}
+async function saveToFile() {
+  await flushSave();
+  const canPick = typeof window.showSaveFilePicker === 'function';
+  if (!canPick) { downloadHTML(); toast('這個瀏覽器不能直接覆寫檔案，已下載一份新檔'); return; }
+  try {
+    if (!fileHandle) {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: htmlName(),
+        types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }]
+      });
+    }
+    const w = await fileHandle.createWritable();
+    await w.write(buildHTML());
+    await w.close();
+    toast('已存回檔案');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    fileHandle = null;
+    downloadHTML(); toast('無法直接寫入，已改為下載一份新檔');
+  }
 }
 
 /* ---------- helpers ---------- */
@@ -464,7 +572,7 @@ function render() {
   state.employees.forEach(emp => {
     const row = map[emp.id] || {};
     let days = 0, hours = 0;
-    h += `<tr><td class="c-name"><div class="nm">${esc(emp.name)}</div>${emp.note ? `<div class="no">${esc(emp.note)}</div>` : ''}</td>`;
+    h += `<tr><td class="c-name" data-emp="${emp.id}" title="點姓名開個人班表卡"><div class="nm">${esc(emp.name)}</div>${emp.note ? `<div class="no">${esc(emp.note)}</div>` : ''}</td>`;
     for (let d = 1; d <= nd; d++) {
       const w = dow(y, m, d);
       const s = row[d] ? shiftOf(row[d]) : null;
@@ -499,21 +607,29 @@ function render() {
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 /* ---------- painting ---------- */
+/* 唯一的排班寫入點：主表與個人卡都呼叫這裡，兩邊看到的永遠是同一份資料。
+   寫入後同步更新主表該格與統計，以及開啟中的個人卡。 */
+function setCell(empId, day, shiftId) {
+  const map = monthMap(true);
+  if (!map[empId]) map[empId] = {};
+  if (shiftId) map[empId][day] = shiftId;
+  else delete map[empId][day];
+  if (!Object.keys(map[empId]).length) delete map[empId];
+  save();
+  const s = shiftId ? shiftOf(shiftId) : null;
+  const td = document.querySelector(`td.cell[data-e="${empId}"][data-d="${day}"]`);
+  if (td) {
+    td.style.background = s ? s.color : '';
+    td.innerHTML = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
+  }
+  updateSums(empId, day);
+  if (cardEmp === empId) renderCard();
+}
 function paint(td, clear) {
   const e = td.dataset.e, d = +td.dataset.d;
   if (!e) return;
-  const map = monthMap(true);
-  if (!map[e]) map[e] = {};
-  if (clear || brush === 'erase') delete map[e][d];
-  else if (brush) map[e][d] = brush;
-  else return;
-  if (!Object.keys(map[e]).length) delete map[e];
-  save();
-  // 只更新這一格與相關統計，不整表重繪，拖曳大量格子才不會卡
-  const s = map[e]?.[d] ? shiftOf(map[e][d]) : null;
-  td.style.background = s ? s.color : '';
-  td.innerHTML = s ? `<span class="mark" style="color:${textOn(s.color)}">${esc(s.code)}</span>` : '';
-  updateSums(e, d);
+  if (clear || brush === 'erase') setCell(e, d, null);
+  else if (brush) setCell(e, d, brush);
 }
 function updateSums(e, d) {
   const map = monthMap();
@@ -549,6 +665,8 @@ function updateSums(e, d) {
   });
 }
 document.addEventListener('pointerdown', ev => {
+  const nameTd = ev.target.closest('tbody td.c-name');
+  if (nameTd && nameTd.dataset.emp) { openCard(nameTd.dataset.emp); return; }
   const td = ev.target.closest('td.cell');
   if (!td || ev.button === 2) return;
   if (!brush) { toast('先在上方選一個班別當筆刷'); return; }
@@ -584,7 +702,7 @@ document.addEventListener('keydown', ev => {
 });
 
 /* ---------- modals ---------- */
-function closeModal() { const o = document.querySelector('.overlay'); if (o) o.remove(); }
+function closeModal() { const o = document.querySelector('.overlay'); if (o) o.remove(); cardEmp = cardRef = null; }
 function modal(title, bodyHTML, footerHTML) {
   closeModal();
   const o = document.createElement('div');
@@ -597,6 +715,200 @@ function modal(title, bodyHTML, footerHTML) {
   return o;
 }
 
+/* ---------- 個人班表卡 ---------- */
+let cardEmp = null, cardRef = null;
+const empOf = id => state.employees.find(e => e.id === id);
+const wageOf = emp => (emp && emp.wage != null && emp.wage !== '') ? +emp.wage : (+state.baseWage || 0);
+const money = n => 'NT$ ' + Math.round(n).toLocaleString('en-US');
+
+function cardStats(empId) {
+  const row = monthMap()[empId] || {};
+  const nd = daysIn(ym.y, ym.m);
+  let days = 0, hours = 0;
+  const per = {};
+  for (let d = 1; d <= nd; d++) {
+    const s = row[d] ? shiftOf(row[d]) : null;
+    if (!s) continue;
+    per[s.id] = (per[s.id] || 0) + 1;
+    if (s.count !== false) { days++; hours += +s.hours || 0; }
+  }
+  return { days, hours, per, row, nd };
+}
+
+function openCard(empId) {
+  const emp = empOf(empId);
+  if (!emp) return;
+  const o = modal(`${esc(emp.name)}　個人班表`, '<div id="card-body"></div>',
+    `<button class="btn" id="card-img">匯入對照圖</button>
+     <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:4px">
+       <input type="checkbox" id="card-pay"> 圖片含薪資</label>
+     <button class="btn" id="card-jpg">下載 JPG</button>
+     <span style="flex:1"></span><button class="btn btn-solid" data-close>完成</button>`);
+  o.querySelector('.modal').classList.add('wide');
+  // modal() 內部會先 closeModal()，所以卡片狀態要在建立之後才設
+  cardEmp = empId; cardRef = null;
+  o.addEventListener('click', ev => { if (ev.target === o || ev.target.dataset.close !== undefined) cardEmp = cardRef = null; });
+  o.querySelector('#card-img').onclick = () => {
+    const f = document.createElement('input');
+    f.type = 'file'; f.accept = 'image/*';
+    f.onchange = () => {
+      const file = f.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = () => { cardRef = r.result; renderCard(); };
+      r.readAsDataURL(file);
+    };
+    f.click();
+  };
+  o.querySelector('#card-jpg').onclick = () => downloadCardJPG(emp, o.querySelector('#card-pay').checked);
+  renderCard();
+}
+
+function renderCard() {
+  const box = document.querySelector('#card-body');
+  if (!box || !cardEmp) return;
+  const emp = empOf(cardEmp);
+  if (!emp) { closeModal(); cardEmp = null; return; }
+  const { days, hours, per, row, nd } = cardStats(cardEmp);
+  const wage = wageOf(emp);
+
+  let cal = '<div class="cal">' + WD.map(w => `<div class="hd">${w}</div>`).join('');
+  const lead = dow(ym.y, ym.m, 1);
+  for (let i = 0; i < lead; i++) cal += '<div class="dy pad"></div>';
+  for (let d = 1; d <= nd; d++) {
+    const s = row[d] ? shiftOf(row[d]) : null;
+    const w = dow(ym.y, ym.m, d);
+    cal += `<button class="dy${w === 0 || w === 6 ? ' wk' : ''}" data-cd="${d}"><span class="n">${d}</span>` +
+      (s ? `<span class="cd" style="background:${esc(s.color)};color:${textOn(s.color)}">${esc(s.code)}</span>` : '<span class="cd">&nbsp;</span>') +
+      '</button>';
+  }
+  cal += '</div>';
+
+  const brushes = '<div class="card-brush"><span class="lbl">筆刷</span>' +
+    state.shifts.map(s => `<button class="chip" data-cb="${s.id}" aria-pressed="${brush === s.id}">
+      <span class="sw" style="background:${esc(s.color)};color:${textOn(s.color)}">${esc(s.code)}</span>${esc(s.name)}</button>`).join('') +
+    `<button class="chip" data-cb="erase" aria-pressed="${brush === 'erase'}"><span class="sw" style="background:#fff">✕</span>清除</button></div>`;
+
+  const perTxt = state.shifts.filter(s => per[s.id]).map(s =>
+    `<span><i class="fi" style="background:${esc(s.color)}"></i>${esc(s.name)} ${per[s.id]} 天</span>`).join('') || '<span style="color:var(--muted)">尚未排班</span>';
+
+  box.innerHTML = `<div class="card-cols">
+      <div class="card-cal">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${ym.y} 年 ${ym.m + 1} 月${emp.note ? '　' + esc(emp.note) : ''}</div>
+        ${brushes}${cal}
+        <div class="stats"><span>出勤 <b>${days}</b> 天</span><span>總時數 <b>${hours}</b> 小時</span></div>
+        <div class="legend" style="margin-top:8px">${perTxt}</div>
+        <div class="pay">
+          <div class="ln"><label style="font-size:12px;color:var(--muted)">時薪</label>
+            <input type="number" id="card-wage" min="0" max="10000" step="1" value="${emp.wage != null && emp.wage !== '' ? emp.wage : ''}" placeholder="${+state.baseWage || 0}">
+            <span style="font-size:12px;color:var(--muted)">× ${hours} 小時</span>
+            <span class="amt">${money(hours * wage)}</span></div>
+          <p class="note">時薪留空就套用基本時薪 ${money(+state.baseWage || 0)}／小時（在「員工」視窗設定）。${emp.wage != null && emp.wage !== '' ? '目前使用個人時薪。' : ''}</p>
+        </div>
+      </div>
+      ${cardRef ? `<div class="card-ref"><img src="${cardRef}" alt="對照圖">
+        <p class="hint">對照這張圖，在左邊月曆點日期修改班別（例如沒出席的改成休假）。圖片只在這次開啟時顯示，不會被儲存。</p></div>` : ''}
+    </div>`;
+
+  box.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => {
+    const v = b.dataset.cb;
+    brush = brush === v ? null : v;
+    renderPalette(); renderCard();
+  });
+  box.querySelectorAll('[data-cd]').forEach(b => b.onclick = () => {
+    const d = +b.dataset.cd;
+    if (!brush) { toast('先選一個班別當筆刷'); return; }
+    const cur = (monthMap()[cardEmp] || {})[d];
+    // 點到已是同一個班別 → 清除，方便快速槓掉
+    setCell(cardEmp, d, (brush === 'erase' || cur === brush) ? null : brush);
+  });
+  const wi = box.querySelector('#card-wage');
+  wi.oninput = () => {
+    emp.wage = wi.value === '' ? null : Math.max(0, Math.min(10000, +wi.value || 0));
+    save();
+    box.querySelector('.amt').textContent = money(hours * wageOf(emp));
+  };
+}
+
+/* 手繪 canvas 產生 JPG，維持單檔零依賴 */
+function downloadCardJPG(emp, withPay) {
+  const { days, hours, per, row, nd } = cardStats(emp.id);
+  const wage = wageOf(emp);
+  const S = 2, W = 720, CW = 96, CH = 74, PAD = 24;
+  const calTop = 150;
+  const lead = dow(ym.y, ym.m, 1);
+  const rows = Math.ceil((lead + nd) / 7);
+  const statsTop = calTop + 26 + rows * CH + 18;
+  const H = statsTop + 40 + (withPay ? 54 : 0) + 16;
+
+  const cv = document.createElement('canvas');
+  cv.width = W * S; cv.height = H * S;
+  const x = cv.getContext('2d');
+  x.scale(S, S);
+  const font = (sz, w) => `${w || 400} ${sz}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+
+  x.fillStyle = '#151A21'; x.font = font(24, 700);
+  x.fillText(emp.name, PAD, 44);
+  x.font = font(14); x.fillStyle = '#6C7480';
+  const sub = [state.unit, emp.note].filter(Boolean).join('　');
+  if (sub) x.fillText(sub, PAD + x.measureText(emp.name).width + 220, 44);
+  x.fillStyle = '#26418F'; x.font = font(18, 600);
+  x.fillText(`${ym.y} 年 ${ym.m + 1} 月 班表`, PAD, 76);
+  x.strokeStyle = '#E3E5E9'; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(PAD, 92); x.lineTo(W - PAD, 92); x.stroke();
+
+  x.font = font(12); x.fillStyle = '#6C7480';
+  let lx = PAD;
+  state.shifts.filter(s => per[s.id]).forEach(s => {
+    x.fillStyle = s.color; x.fillRect(lx, 108, 11, 11);
+    x.strokeStyle = 'rgba(0,0,0,.15)'; x.strokeRect(lx + .5, 108.5, 10, 10);
+    x.fillStyle = '#3C4450'; x.font = font(12);
+    const t = `${s.name} ${per[s.id]} 天`;
+    x.fillText(t, lx + 16, 118);
+    lx += 16 + x.measureText(t).width + 18;
+  });
+
+  x.font = font(12, 600); x.fillStyle = '#6C7480'; x.textAlign = 'center';
+  WD.forEach((w, i) => x.fillText(w, PAD + i * CW + CW / 2, calTop + 14));
+  for (let d = 1; d <= nd; d++) {
+    const idx = lead + d - 1, cx = PAD + (idx % 7) * CW, cy = calTop + 26 + Math.floor(idx / 7) * CH;
+    x.strokeStyle = '#E3E5E9'; x.strokeRect(cx + .5, cy + .5, CW - 4, CH - 4);
+    const w = dow(ym.y, ym.m, d);
+    x.textAlign = 'left'; x.font = font(11);
+    x.fillStyle = (w === 0 || w === 6) ? '#B4232A' : '#6C7480';
+    x.fillText(String(d), cx + 6, cy + 16);
+    const s = row[d] ? shiftOf(row[d]) : null;
+    if (s) {
+      x.fillStyle = s.color; x.fillRect(cx + 6, cy + 22, CW - 16, 30);
+      x.fillStyle = textOn(s.color); x.font = font(15, 700); x.textAlign = 'center';
+      x.fillText(s.code, cx + 6 + (CW - 16) / 2, cy + 43);
+      x.textAlign = 'left';
+    }
+  }
+
+  x.textAlign = 'left';
+  x.strokeStyle = '#E3E5E9';
+  x.beginPath(); x.moveTo(PAD, statsTop); x.lineTo(W - PAD, statsTop); x.stroke();
+  x.fillStyle = '#151A21'; x.font = font(15, 600);
+  x.fillText(`出勤 ${days} 天`, PAD, statsTop + 26);
+  x.fillText(`總時數 ${hours} 小時`, PAD + 140, statsTop + 26);
+  if (withPay) {
+    x.fillStyle = '#F7F8FA'; x.fillRect(PAD, statsTop + 40, W - PAD * 2, 44);
+    x.strokeStyle = '#E3E5E9'; x.strokeRect(PAD + .5, statsTop + 40.5, W - PAD * 2 - 1, 43);
+    x.fillStyle = '#6C7480'; x.font = font(13);
+    x.fillText(`時薪 ${money(wage)} × ${hours} 小時`, PAD + 12, statsTop + 68);
+    x.fillStyle = '#26418F'; x.font = font(20, 700); x.textAlign = 'right';
+    x.fillText(money(hours * wage), W - PAD - 12, statsTop + 70);
+    x.textAlign = 'left';
+  }
+
+  const a = document.createElement('a');
+  a.href = cv.toDataURL('image/jpeg', .92);
+  a.download = `班表-${emp.name}-${ym.y}${String(ym.m + 1).padStart(2, '0')}.jpg`;
+  a.click();
+  toast('已下載個人班表圖片');
+}
+
 function openStaff() {
   const rows = state.employees.map((e, i) => `<div class="row" data-i="${i}">
       <span class="idx">${i + 1}</span>
@@ -607,13 +919,23 @@ function openStaff() {
       <button class="mini danger" data-del title="刪除">✕</button>
     </div>`).join('') || '<p style="color:var(--muted);font-size:13px;margin:0">名單是空的，用下面的欄位一次貼上。</p>';
 
-  const o = modal('員工', rows + `<div class="field">
+  const wageBox = `<div class="row" style="border-bottom:1px solid var(--rule);padding-bottom:9px;margin-bottom:6px">
+      <label style="font-size:12px;color:var(--ink-soft);font-weight:600">基本時薪</label>
+      <input type="number" id="base-wage" min="0" max="10000" step="1" value="${+state.baseWage || 0}" style="width:92px">
+      <span style="font-size:12px;color:var(--muted)">元／小時，個人可在班表卡另外調整</span>
+    </div>`;
+
+  const o = modal('員工', wageBox + rows + `<div class="field">
       <h3>批次新增</h3><p>一行一個姓名，貼上後按「加入名單」。</p>
       <textarea id="bulk" placeholder="王小明&#10;陳美惠&#10;林志豪"></textarea>
     </div>`, `<button class="btn" id="bulk-add">加入名單</button>
        <span style="flex:1"></span><button class="btn btn-solid" data-close>完成</button>`);
+  o.querySelector('#base-wage').oninput = ev => {
+    state.baseWage = Math.max(0, Math.min(10000, +ev.target.value || 0));
+    save(); if (cardEmp) renderCard();
+  };
 
-  o.querySelectorAll('.row').forEach(r => {
+  o.querySelectorAll('.row[data-i]').forEach(r => {
     const i = +r.dataset.i;
     r.querySelectorAll('input').forEach(inp => inp.oninput = () => {
       state.employees[i][inp.dataset.f] = inp.value; save(); render();
@@ -698,6 +1020,7 @@ $('#today-btn').onclick = () => { const n = new Date(); ym = { y: n.getFullYear(
 $('#open-staff').onclick = openStaff;
 $('#open-shifts').onclick = openShifts;
 $('#print').onclick = () => window.print();
+$('#save-file').onclick = saveToFile;
 $('#unit').oninput = e => { state.unit = e.target.value; save(); };
 function applyZoom() {
   const z = ZOOMS.includes(+state.zoom) ? +state.zoom : 1;
@@ -726,7 +1049,10 @@ function openHelp() {
       <li><b>加入員工</b><span>按上方「員工」，在最下面的欄位一行一個姓名貼上，按「加入名單」。姓名旁可填職務或備註，會印在名字下方。用 ↑ ↓ 調整表上的排列順序。</span></li>
       <li><b>設定班別</b><span>按上方「班別」。左邊色塊決定格子顏色，接著是格子裡顯示的字（1–2 字）、班別全名、時數。休假、例假這類不算上班的，把「計入出勤」取消勾選，就不會被算進統計。</span></li>
       <li><b>排班</b><span>在筆刷列選一個班別，在格子上點一下就填入。按住滑鼠左鍵拖曳可以一次填一整排，適合連上五天。填錯就按右鍵清除，或選「清除」筆刷再塗。</span></li>
-      <li><b>看統計</b><span>右邊兩欄是每個人的出勤天數與時數，最下面一列是每天的出勤人數——人力不足的日子會直接看出來。全部自動計算。</span></li>
+      <li><b>看統計</b><span>右邊兩欄是每個人的出勤天數與時數，下面是每天的出勤人數，再往下每個班別各一列，看得到每天各班有幾個人、整月各班總人次。全部自動計算。</span></li>
+      <li><b>個人班表卡與算錢</b><span>點表格左邊的姓名，會開啟那個人的月曆卡片。卡片裡可以直接排班（上面有同一組筆刷），跟主表是同一份資料，改哪邊另一邊都會跟著變。月底核對打卡時，沒出席的日子就在卡片裡改成休假，時數與金額立刻重算。時薪留空會套用「員工」視窗裡設定的基本時薪，個別員工也可以在卡片裡單獨填。</span></li>
+      <li><b>發給員工</b><span>在個人卡按「下載 JPG」，會存成一張班表圖片可以傳給本人。預設不含薪資，要對帳時勾「圖片含薪資」再下載。</span></li>
+      <li><b>對照紙本核銷</b><span>在個人卡按「匯入對照圖」選一張照片（例如打叉的紙本班表），照片會顯示在月曆旁邊，照著它點日期修改就好。照片只在這次開啟時顯示，不會被存起來。</span></li>
       <li><b>下個月</b><span>用左上角 ‹ › 換月份。按「套用上月」可以把上個月整份複製過來再修改，比從空白排快得多。</span></li>
       <li><b>列印</b><span>按「列印班表」，版面已設定成 A4 橫式一頁。在列印對話框把「背景圖形」打開，班別顏色才會印出來。</span></li>
     </ol>
@@ -742,11 +1068,14 @@ function openHelp() {
     <div class="field">
       <h3>資料存在哪裡</h3>
       <p>所有內容自動儲存在${where}，不會傳到任何伺服器。換電腦、換瀏覽器或清除瀏覽資料後就看不到了，重要班表請先匯出備份，或直接列印存檔。</p>
+      <p>把這個檔案存到自己電腦使用時，上方的「儲存檔案」會把目前的資料直接寫回 HTML 檔（Chrome、Edge 第一次會問要存成哪個檔，之後按一下就覆寫）。下面的「另存新版」則是每次都另存一份帶日期的檔案，可以留著當版本紀錄。</p>
     </div>`,
     `<button class="btn" id="export">匯出備份</button>
      <button class="btn" id="import">匯入備份</button>
+     <button class="btn" id="save-as">另存新版 HTML</button>
      <span style="flex:1"></span>
      <button class="btn btn-quiet" id="reset">清除所有資料</button>`);
+  o.querySelector('#save-as').onclick = async () => { await flushSave(); downloadHTML(); toast('已另存一份 HTML'); };
 
   o.querySelector('#export').onclick = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -790,8 +1119,16 @@ window.openHelp = openHelp;
 (async () => {
   const n = new Date();
   ym = { y: n.getFullYear(), m: n.getMonth() };
-  state = normBackup(await load()) || seed();
+  // 檔案內嵌資料與瀏覽器儲存，取時間戳較新的那份
+  const fromFile = normBackup(embeddedData());
+  const fromStore = normBackup(await load());
+  let src = '';
+  if (fromFile && fromStore) {
+    if (fromStore.savedAt > fromFile.savedAt) { state = fromStore; src = '這台瀏覽器有較新的資料，已載入瀏覽器版本'; }
+    else { state = fromFile; src = '已載入檔案內建的資料'; }
+  } else state = fromFile || fromStore || seed();
   brush = state.shifts[0] ? state.shifts[0].id : null;
+  if (src) setTimeout(() => toast(src), 400);
   applyZoom();
   renderPalette();
   render();
